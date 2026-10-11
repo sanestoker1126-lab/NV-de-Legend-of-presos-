@@ -69,7 +69,7 @@ h1 {
 .pause-button { z-index: 4; }
 .arena-message { z-index: 6; }
 .loading-message { z-index: 7; }
-#game-canvas { display: none !important; }
+#arena-viewport > #game-canvas { display: block !important; width: 100%; height: 100%; object-fit: contain; }
 .selection-section, .stage-section { padding-bottom: 28px; }
 .section-heading { margin-bottom: 14px; }
 .fighter-card, .stage-card {
