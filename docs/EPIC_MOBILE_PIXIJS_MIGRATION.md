@@ -48,6 +48,13 @@ A candidate atlas is accepted only when:
 - The Pixi draw loop is synchronous after preload, and frame textures are cached by atlas URL, row and column.
 
 
+## Escape campaign and combat presentation
+
+- Campaign mode opens with a short story prologue about a failed prison count and escape route; the four-beat 3–2–1–fight intro can be skipped at any time.
+- Tournament mode runs three consecutive best-of-three matches against distinct catalog fighters. Quick fight remains available as a separate mode.
+- Rounds use a 50-second clock. The engine adds a high-cost hidden special at 80 energy, exposed through `I` on keyboard and the `MAX` touch control.
+- The renderer places small idle catalog fighters in the background and reuses a fixed particle pool for sparks, streaks and rings. It does not invent or promote unverified atlas animations.
+
 ## Combat feedback parity
 
 - The PixiJS renderer reuses a per-fighter `Graphics` object for guard and special-move arcs, preserving the visual cues from the former 2D canvas renderer.
