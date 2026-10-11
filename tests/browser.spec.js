@@ -108,6 +108,21 @@ test('all six fighters and five stages load and change the arena preview', async
   expect(stageFrames.size, 'Stage selections must change the actual arena artwork').toBe(5);
 });
 
+
+test('tournament mode opens with a 50-second first bout and the three-beat intro', async ({ page }) => {
+  await page.locator('#game-mode').selectOption('tournament');
+  await page.locator('#play-button').click();
+  await expect(page.locator('#hud')).toBeVisible();
+  await expect(page.locator('#arena-message')).toBeVisible();
+  await expect(page.locator('#message-title')).toHaveText('3');
+  await page.locator('#continue-button').click();
+  await expect(page.locator('#arena-message')).toBeHidden();
+  await expect(page.locator('#arena-state')).toHaveText('EN COMBATE');
+  await expect(page.locator('#timer')).toHaveText('50');
+  await expect(page.locator('#round-label')).toContainText('TORNEO 1/3');
+  await expect(page.locator('#game-mode')).toBeDisabled();
+});
+
 test('desktop keyboard combat changes health and energy; pause, resume and return work', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Covered by touch controls on mobile');
   await beginMatch(page);
