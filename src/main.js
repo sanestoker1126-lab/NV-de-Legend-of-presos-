@@ -307,7 +307,7 @@ function handleEvents() {
 }
 function render(dt) {
   if (!catalog) return;
-  if (!match?.paused) { for (const particle of particles) { particle.life -= dt; particle.x += particle.vx * dt; particle.y += particle.vy * dt; } }
+  if (!match?.paused || introSequence) { for (const particle of particles) { particle.life -= dt; particle.x += particle.vx * dt; particle.y += particle.vy * dt; particle.vy += (particle.shape === 'ring' ? 0 : 320) * dt; } }
   particles = particles.filter(particle => particle.life > 0);
   pixiRenderer?.draw({ stage: selectedStage, catalog, match, selectedFighter, elapsed, particles, selectionPulse, introStep: introSequence?.step ?? -1 });
 }
