@@ -224,32 +224,6 @@ $('sound-toggle').addEventListener('click', () => {
   else for (const pool of audioPool.values()) for (const audio of pool) audio.pause();
 });
 
-function renderFighter(fighter, time, preview = false) {
-  const info = fighterById(fighter.id);
-  const image = textures.get(info.path);
-  const action = fighter.action === 'hit' ? 'hurt' : fighter.action === 'special' ? 'punch' : fighter.action;
-  const animation = info.animations[action] || info.animations.idle;
-  const frame = Math.floor((reducedMotion && preview ? 0 : time) * (action === 'idle' ? 7 : 15)) % animation.frames;
-  const column = animation.startColumn + frame;
-  const scale = info.frameHeight === 120 ? 1.92 : 1.72;
-  const width = info.frameWidth * scale;
-  const height = info.frameHeight * scale;
-  const ground = ARENA.groundY + 5;
-  context.save();
-  context.fillStyle = '#05090770';
-  context.beginPath(); context.ellipse(fighter.x, ground + 2, 47, 9, 0, 0, Math.PI * 2); context.fill();
-  context.translate(fighter.x, ground - fighter.y);
-  context.scale(fighter.facing, 1);
-  if (fighter.action === 'special') { context.shadowColor = '#ff9a58'; context.shadowBlur = reducedMotion ? 0 : 24; }
-  context.drawImage(image, column * info.frameWidth, animation.row * info.frameHeight, info.frameWidth, info.frameHeight, -width / 2, -height + 12, width, height);
-  if (fighter.action === 'block') {
-    context.strokeStyle = '#acd9ea99'; context.lineWidth = 3; context.beginPath(); context.arc(0, -95, 57, -1.4, 1.4); context.stroke();
-  }
-  if (fighter.action === 'special' && !reducedMotion) {
-    context.strokeStyle = '#ff784766'; context.lineWidth = 7; context.beginPath(); context.arc(36, -90, 48 + Math.sin(time * 16) * 8, -1.3, 1.3); context.stroke();
-  }
-  context.restore();
-}
 function handleEvents() {
   for (const event of match.events) {
     if (event.type === 'hit') {
