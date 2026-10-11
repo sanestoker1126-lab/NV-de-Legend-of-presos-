@@ -166,8 +166,14 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
       app.canvas.dataset.playerX = String(match.fighters.player.x);
       const player = catalog.fighters.find(f => f.id === match.fighters.player.id);
       const opponent = catalog.fighters.find(f => f.id === match.fighters.opponent.id);
-      renderFighter(match.fighters.player, player, elapsed, 'combat-player');
-      renderFighter(match.fighters.opponent, opponent, elapsed + 0.2, 'combat-opponent');
+      const playerVisual = match.status === 'finished' && match.winner === 'player' && player?.animations.victory
+        ? { ...match.fighters.player, action: 'victory' }
+        : match.fighters.player;
+      const opponentVisual = match.status === 'finished' && match.winner === 'opponent' && opponent?.animations.victory
+        ? { ...match.fighters.opponent, action: 'victory' }
+        : match.fighters.opponent;
+      renderFighter(playerVisual, player, elapsed, 'combat-player');
+      renderFighter(opponentVisual, opponent, elapsed + 0.2, 'combat-opponent');
     }
     updateParticles(particles);
     app.renderer.render(app.stage);
