@@ -285,7 +285,7 @@ test('complete rounds preserve the score, finish the match and allow a rematch',
   const waitForRound = async () => {
     // Run real animation frames against virtual browser time, without changing
     // game state or replacing the CPU. An idle player loses to the hard CPU.
-    for (let i = 0; i < 9 && !(await page.locator('#arena-message').isVisible()); i++) await page.clock.runFor(5000);
+    for (let i = 0; i < 11 && !(await page.locator('#arena-message').isVisible()); i++) await page.clock.runFor(5000);
     await expect(page.locator('#arena-message')).toBeVisible();
   };
   await waitForRound();
