@@ -29,6 +29,8 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
   const fighterLayer = new Container();
   fighterLayer.sortableChildren = true;
   const fxLayer = new Container();
+  const particlePool = Array.from({ length: 32 }, () => new Graphics());
+  fxLayer.addChild(...particlePool);
   scene.addChild(backgroundLayer, fighterLayer, fxLayer);
   app.stage.addChild(scene);
 
@@ -117,6 +119,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     sprite.x = fighter.x;
     sprite.y = ARENA.groundY + 5 - fighter.y + 12;
     sprite.zIndex = Math.round(fighter.x);
+    sprite.visible = true;
     sprite.tint = fighter.action === 'special' && !reducedMotion ? 0xffd8b2 : 0xffffff;
 
     let shadow = shadowCache.get(key);
@@ -127,20 +130,18 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     }
     shadow.x = fighter.x;
     shadow.y = ARENA.groundY + 7;
+    shadow.visible = true;
     shadow.zIndex = Math.round(fighter.x) - 0.1;
   }
 
   function updateParticles(particles = []) {
-    // Reuse at most 32 FX graphics to avoid allocation churn on every frame.
-    const visible = particles.slice(0, 32);
-    while (fxLayer.children.length < visible.length) fxLayer.addChild(new Graphics());
-    while (fxLayer.children.length > visible.length) {
-      const item = fxLayer.removeChildAt(fxLayer.children.length - 1);
-      item.clear();
-    }
-    visible.forEach((particle, index) => {
-      const dot = fxLayer.children[index];
-      dot.clear().rect(particle.x, particle.y, 4, 4).fill({
+    // Reuse a fixed pool to avoid allocating graphics during combat.
+    const visible = particles.slice(0, particlePool.length);
+    particlePool.forEach((dot, index) => {
+      const particle = visible[index];
+      dot.clear();
+      dot.visible = Boolean(particle);
+      if (particle) dot.rect(particle.x, particle.y, 4, 4).fill({
         color: particle.color === '#b9dfe6' ? 0xb9dfe6 : 0xffd483,
         alpha: Math.max(0, particle.life / 0.28),
       });
@@ -149,6 +150,8 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
 
   function draw({ stage, catalog, match, selectedFighter = 'tobi', elapsed, particles = [] }) {
     if (destroyed) return;
+    for (const sprite of spriteCache.values()) sprite.visible = false;
+    for (const shadow of shadowCache.values()) shadow.visible = false;
     const stageInfo = catalog.backgrounds.find(item => item.id === stage);
     if (stageInfo) setBackground(stageInfo.path);
     if (!match) {
