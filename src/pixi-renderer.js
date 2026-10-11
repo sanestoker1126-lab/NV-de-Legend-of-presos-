@@ -155,11 +155,15 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     const stageInfo = catalog.backgrounds.find(item => item.id === stage);
     if (stageInfo) setBackground(stageInfo.path);
     if (!match) {
+      delete app.canvas.dataset.playerX;
       const left = catalog.fighters.find(f => f.id === selectedFighter) || catalog.fighters[0];
       const right = catalog.fighters.find(f => f.id === 'mateo' && f.id !== left.id) || catalog.fighters.find(f => f.id !== left.id);
       renderFighter({ id: left.id, x: 280, y: 0, facing: 1, action: 'idle' }, left, elapsed, 'preview-player');
       renderFighter({ id: right.id, x: 680, y: 0, facing: -1, action: 'idle' }, right, elapsed + 0.3, 'preview-opponent');
     } else {
+      // Expose the player's world-space position for robust browser E2E assertions.
+      // Avoid reading pixels back from WebGL, which is not reliable without preserveDrawingBuffer.
+      app.canvas.dataset.playerX = String(match.fighters.player.x);
       const player = catalog.fighters.find(f => f.id === match.fighters.player.id);
       const opponent = catalog.fighters.find(f => f.id === match.fighters.opponent.id);
       renderFighter(match.fighters.player, player, elapsed, 'combat-player');
