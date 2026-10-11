@@ -27,6 +27,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
   const scene = new Container();
   const backgroundLayer = new Container();
   const fighterLayer = new Container();
+  fighterLayer.sortableChildren = true;
   const fxLayer = new Container();
   scene.addChild(backgroundLayer, fighterLayer, fxLayer);
   app.stage.addChild(scene);
@@ -106,7 +107,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     const scale = info.frameHeight === 120 ? 1.92 : 1.72;
     sprite.scale.set(scale * fighter.facing, scale);
     sprite.x = fighter.x;
-    sprite.y = ARENA.groundY + 5 - fighter.y + 12 * scale;
+    sprite.y = ARENA.groundY + 5 - fighter.y + 12;
     sprite.zIndex = Math.round(fighter.x);
     sprite.tint = fighter.action === 'special' && !reducedMotion ? 0xffd8b2 : 0xffffff;
 
@@ -118,6 +119,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     }
     shadow.x = fighter.x;
     shadow.y = ARENA.groundY + 7;
+    shadow.zIndex = Math.round(fighter.x) - 0.1;
   }
 
   function updateParticles(particles = []) {
