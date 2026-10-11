@@ -130,6 +130,7 @@ function startGame() {
   if (!storySeen && $('game-mode').value === 'story') {
     showMessage('EXPEDIENTE PUENTE GRANDE · 03:17 AM', 'EL RECUENTO NO CUADRA', 'Las luces del patio parpadean. Falta un preso, sobran rumores y los pasillos empiezan a cerrarse. Sobrevive a los combates, reúne aliados y encuentra la ruta antes del amanecer.', 'COMENZAR EL ESCAPE', () => { storySeen = true; beginMatch(); });
     $('back-button').textContent = 'VOLVER AL PATIO';
+    $('arena-shell').scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth', block: 'center' });
     return;
   }
   if ($('game-mode').value === 'tournament') {
