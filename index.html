@@ -12,7 +12,7 @@
     <div id="app">
       <header class="site-header">
         <a class="brand" href="#jugar" aria-label="Puente Grande, inicio"><span class="brand-mark">PG<span aria-hidden="true"></span></span><span class="brand-name">PUENTE<br />GRANDE<span class="brand-edition">ARCADE CLUB</span></span></a>
-        <nav aria-label="Navegación principal"><a href="#jugar" class="active">Jugar</a><a href="#luchadores">Luchadores</a><a href="#controles">Cómo jugar</a></nav>
+        <nav aria-label="Navegación principal"><a href="#jugar" class="active">Jugar</a><a href="#historia">Historia</a><a href="#luchadores">Luchadores</a><a href="#controles">Cómo jugar</a></nav>
         <button class="sound-button" id="sound-toggle" aria-pressed="false" aria-label="Activar sonido"><span aria-hidden="true">♪</span><span id="sound-label">Sonido apagado</span></button>
       </header>
       <main>
@@ -22,10 +22,12 @@
             <h1 id="main-title">LA LEY<br />ES <span>PELEAR.</span></h1>
             <p class="intro-copy">No hay salida fácil.<br /> Elige tu peleador. Domina el patio.</p>
             <div class="match-config">
-              <label for="difficulty">TU RIVAL</label>
+              <label for="game-mode">MODO DE JUEGO</label>
+              <div class="select-wrapper"><select id="game-mode"><option value="story" selected>CAMPAÑA · ESCAPE</option><option value="tournament">TORNEO · TRES COMBATES</option><option value="quick">COMBATE RÁPIDO</option></select><span aria-hidden="true">⌄</span></div>
+              <label for="difficulty">DIFICULTAD DEL RIVAL</label>
               <div class="select-wrapper"><select id="difficulty"><option value="easy">CPU · Principiante</option><option value="normal" selected>CPU · Callejero</option><option value="hard">CPU · Veterano</option></select><span aria-hidden="true">⌄</span></div>
               <button class="primary-button" id="play-button" disabled>INICIAR COMBATE <span aria-hidden="true">↗</span></button>
-              <span class="game-specs">1 JUGADOR <i></i> AL MEJOR DE 3 <i></i> SIN DESCARGAS</span>
+              <span class="game-specs">50 SEGUNDOS <i></i> AL MEJOR DE 3 <i></i> CAMPAÑA / TORNEO</span>
             </div>
             <div class="session-stats"><span class="stats-value" id="wins-count">00</span><span>VICTORIAS<br /><span class="muted">EN ESTE DISPOSITIVO</span></span></div>
           </div>
@@ -47,10 +49,11 @@
             <div class="arena-bottomline"><span><span class="orange-marker" aria-hidden="true"></span> <span id="selected-label">ELIGE TU LUCHADOR</span></span><span class="keyboard-note">TECLADO O CONTROLES TÁCTILES</span></div>
             <div class="touch-controls" id="touch-controls" hidden aria-label="Controles de la partida">
               <div class="direction-controls"><button data-control="left" aria-label="Mover a la izquierda">←</button><div><button data-control="jump" aria-label="Saltar">↑</button><button data-control="block" aria-label="Bloquear">↓</button></div><button data-control="right" aria-label="Mover a la derecha">→</button></div>
-              <div class="action-controls"><button data-control="punch">J<span>GOLPE</span></button><button data-control="kick">K<span>PATADA</span></button><button data-control="special" class="special-control">L<span>ESPECIAL</span></button></div>
+              <div class="action-controls"><button data-control="punch">J<span>GOLPE</span></button><button data-control="kick">K<span>PATADA</span></button><button data-control="special" class="special-control">L<span>ESPECIAL</span></button><button data-control="hidden" class="hidden-control">I<span>MAX</span></button></div>
             </div>
           </div>
         </section>
+        <section class="story-section" id="historia" aria-labelledby="story-title"><div class="story-kicker">ARCHIVO 01 · EXPEDIENTE DE FUGA</div><h2 id="story-title">EL PENAL NO ES EL FINAL.</h2><p>Un recuento incompleto rompe la calma de Puente Grande. En el patio, los rumores se convierten en alianzas y cada combate abre una ruta hacia la salida. La campaña se cuenta entre cinemáticas breves, decisiones de pelea y un torneo que decide quién llega al último portón.</p><div class="story-chapters"><span>01 · RECUENTO</span><span>02 · EL PATIO</span><span>03 · LOS PASILLOS</span><span>04 · LA RUTA</span><span>05 · EL ÚLTIMO PORTÓN</span></div></section>
         <section class="selection-section" id="luchadores" aria-labelledby="fighters-title">
           <div class="section-heading"><div><span class="section-number">01 /</span><h2 id="fighters-title">ELIGE TU LUCHADOR</h2></div><span class="section-hint">SEIS FORMAS DE DEJAR HUELLA</span></div>
           <div class="fighters-grid" id="fighters-grid" aria-label="Seleccionar luchador"></div>
@@ -65,7 +68,7 @@
         </section>
         <div class="status-announcement" id="announcement" aria-live="polite" role="status"></div>
       </main>
-      <footer><span class="footer-brand">PUENTE GRANDE<span>ARCADE CLUB</span></span><p>Un patio. Muchas historias. Tu siguiente pelea.</p><span class="footer-version">PROTOTIPO JUGABLE · V.01</span></footer>
+      <footer><span class="footer-brand">PUENTE GRANDE<span>ARCADE CLUB</span></span><p>Un patio. Muchas historias. Tu siguiente pelea.</p><span class="footer-version">CAMPAÑA DE ESCAPE · V.02</span></footer>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

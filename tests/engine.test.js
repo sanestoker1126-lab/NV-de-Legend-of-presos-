@@ -97,7 +97,7 @@ test('a held jump lands once and an airborne fighter can evade a grounded punch'
 test('pause freezes combat and the timer; large or invalid deltas cannot skip simulation', () => {
   const match = createMatch({ ai: false });
   stepMatch(match, 5, { right: true });
-  assert.equal(match.timeLeft, 44.95);
+  assert.equal(match.timeLeft, 49.95);
   assert.equal(match.fighters.player.x, 296.5);
   setPaused(match);
   const frozen = JSON.stringify(match);
@@ -126,7 +126,7 @@ test('a knockout awards one round and first to two wins finishes the match', () 
   assert.equal(match.round, 2);
   assert.equal(match.fighters.player.wins, 1);
   assert.equal(match.fighters.opponent.health, 100);
-  assert.equal(match.timeLeft, 45);
+  assert.equal(match.timeLeft, 50);
   closeFighters(match);
   match.fighters.opponent.health = 9;
   advance(match, 0.3, { punch: true });
@@ -163,6 +163,21 @@ test('AI closes distance and attacks, and an injected random source reproduces c
   assert.ok(first.fighters.player.health < 100, 'AI deals damage');
   assert.deepEqual(first.fighters, second.fighters);
   assert.equal(first.timeLeft, second.timeLeft);
+});
+
+test('hidden special requires 80 energy and deals a distinct burst of damage', () => {
+  const match = createMatch({ ai: false }); closeFighters(match);
+  match.fighters.player.energy = 79;
+  stepMatch(match, 0.025, { hidden: true });
+  assert.equal(match.fighters.player.action, 'idle');
+  stepMatch(match, 0.025, { hidden: false });
+  match.fighters.player.energy = 100;
+  stepMatch(match, 0.025, { hidden: true });
+  assert.equal(match.fighters.player.energy, 20);
+  assert.equal(match.fighters.player.action, 'hidden');
+  assert.equal(match.events[0].type, 'hiddenSpecial');
+  advance(match, 0.7, { hidden: true });
+  assert.equal(match.fighters.opponent.health, 100 - ATTACKS.hidden.damage);
 });
 
 test('simultaneous attacks can trade and produce a double-knockout draw', () => {

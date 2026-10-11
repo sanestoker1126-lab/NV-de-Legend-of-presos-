@@ -2,7 +2,7 @@
  * Dependency-free combat simulation. Coordinates use a 960 × 420 arena;
  * fighter.x is its horizontal center, and fighter.y is height ABOVE the floor.
  * stepMatch mutates its match and returns it. dt is seconds, capped at 0.05.
- * Input: {left,right,jump,block,punch,kick,special}; jump/attacks use press edges.
+ * Input: {left,right,jump,block,punch,kick,special,hidden}; attacks use press edges.
  * Public fighter actionTime is the remaining animation/recovery time in seconds.
  * events only describe the most recent step and can drive sound/visual effects.
  */
@@ -12,6 +12,7 @@ export const ATTACKS = Object.freeze({
   punch: Object.freeze({ damage: 9, range: 108, startup: 0.07, active: 0.10, duration: 0.34, knockback: 22, energy: 0 }),
   kick: Object.freeze({ damage: 14, range: 146, startup: 0.13, active: 0.12, duration: 0.49, knockback: 38, energy: 0 }),
   special: Object.freeze({ damage: 24, range: 272, startup: 0.19, active: 0.16, duration: 0.72, knockback: 64, energy: 35 }),
+  hidden: Object.freeze({ damage: 38, range: 320, startup: 0.24, active: 0.20, duration: 1.05, knockback: 78, energy: 80 }),
 });
 
 const DIFFICULTIES = {
@@ -19,7 +20,7 @@ const DIFFICULTIES = {
   normal: { reaction: 0.29, aggression: 0.82, block: 0.38, speed: 205 },
   hard: { reaction: 0.17, aggression: 0.98, block: 0.64, speed: 230 },
 };
-const BUTTONS = ['left', 'right', 'jump', 'block', 'punch', 'kick', 'special'];
+const BUTTONS = ['left', 'right', 'jump', 'block', 'punch', 'kick', 'special', 'hidden'];
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const otherSide = side => side === 'player' ? 'opponent' : 'player';
 
@@ -33,10 +34,10 @@ function fighter(id, side, wins = 0) {
 }
 
 /** Create an immediately playable best-of-three match; pass ai:false for tests/local control. */
-export function createMatch({ playerId = 'king', opponentId = 'general', difficulty = 'normal', duration = 45, ai = true, random = Math.random } = {}) {
+export function createMatch({ playerId = 'king', opponentId = 'general', difficulty = 'normal', duration = 50, ai = true, random = Math.random } = {}) {
   return {
-    status: 'playing', round: 1, timeLeft: Number.isFinite(duration) && duration > 0 ? duration : 45,
-    duration: Number.isFinite(duration) && duration > 0 ? duration : 45,
+    status: 'playing', round: 1, timeLeft: Number.isFinite(duration) && duration > 0 ? duration : 50,
+    duration: Number.isFinite(duration) && duration > 0 ? duration : 50,
     difficulty: Object.hasOwn(DIFFICULTIES, difficulty) ? difficulty : 'normal',
     ai: Boolean(ai), random: typeof random === 'function' ? random : Math.random,
     paused: false, winner: null, roundWinner: null, events: [],
@@ -138,7 +139,8 @@ function updateFighter(match, side, input, dt) {
         current.x = clamp(current.x + movement * speed * dt, ARENA.minX, ARENA.maxX);
         if (current.y === 0) current.action = 'walk';
       }
-      const attack = ['special', 'kick', 'punch'].find(name => pressed(name) && current.energy >= ATTACKS[name].energy && (name !== 'special' || current.specialCooldown <= 0));
+      const hiddenReady = pressed('hidden') && current.energy >= ATTACKS.hidden.energy && current.specialCooldown <= 0;
+      const attack = hiddenReady ? 'hidden' : ['special', 'kick', 'punch'].find(name => pressed(name) && current.energy >= ATTACKS[name].energy && (name !== 'special' || current.specialCooldown <= 0));
       if (attack) {
         const definition = ATTACKS[attack];
         current.action = attack;
@@ -146,7 +148,8 @@ function updateFighter(match, side, input, dt) {
         current.energy -= definition.energy;
         current._attack = { name: attack, elapsed: 0, connected: false, direction: current.facing };
         if (attack === 'special') current.specialCooldown = 1.3;
-        match.events.push({ type: attack, side });
+        if (attack === 'hidden') current.specialCooldown = 2.8;
+        match.events.push({ type: attack === 'hidden' ? 'hiddenSpecial' : attack, side });
       }
     }
   }

@@ -46,3 +46,19 @@ A candidate atlas is accepted only when:
 - Pixel-based browser tests read back the WebGL canvas through a separate 2D canvas; they must not request a 2D context from the Pixi canvas itself.
 - All combat atlases and stage textures are preloaded once; stage changes reuse the loaded texture and do not create duplicate background sprites.
 - The Pixi draw loop is synchronous after preload, and frame textures are cached by atlas URL, row and column.
+
+
+## Escape campaign and combat presentation
+
+- Campaign mode opens with a short story prologue about a failed prison count and escape route; the four-beat 3–2–1–fight intro can be skipped at any time.
+- Tournament mode runs three consecutive best-of-three matches against distinct catalog fighters. Quick fight remains available as a separate mode.
+- Character selection and match entry use up to three verified atlas actions (`idle`, `walk`, `punch`/`kick`) before returning to idle; unavailable animation rows fall back safely.
+- Rounds use a 50-second clock. The engine adds a high-cost hidden special at 80 energy, exposed through `I` on keyboard and the `MAX` touch control.
+- The renderer places small idle catalog fighters in the background and reuses a fixed particle pool for sparks, streaks and rings. It does not invent or promote unverified atlas animations.
+- Hidden-special VFX and particle colors are keyed to the six catalog fighter IDs, so each fighter has a distinct signature without requiring unverified art assets.
+
+## Combat feedback parity
+
+- The PixiJS renderer reuses a per-fighter `Graphics` object for guard and special-move arcs, preserving the visual cues from the former 2D canvas renderer.
+- Guard arcs use the legacy cool-blue shield cue; special moves use a pulsing orange arc unless reduced motion is enabled.
+- These effects are presentation-only and do not alter combat simulation, damage, hitboxes, or timers.

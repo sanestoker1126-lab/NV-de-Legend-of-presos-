@@ -30,9 +30,13 @@ async function canvasFrame(page) {
 }
 
 async function beginMatch(page) {
+  await page.locator('#game-mode').selectOption('quick');
   await page.locator('#difficulty').selectOption('easy');
   await page.locator('#play-button').click();
+  if (await page.locator('#message-title').textContent() === 'EL RECUENTO NO CUADRA') await page.locator('#continue-button').click();
   await expect(page.locator('#hud')).toBeVisible();
+  if (await page.locator('#arena-message').isVisible()) await page.locator('#continue-button').click();
+  await expect(page.locator('#arena-message')).toBeHidden();
   await expect(page.locator('#arena-state')).toHaveText('EN COMBATE');
   await expect(page.locator('#player-health-text')).toHaveText('100 HP');
   await expect(page.locator('#opponent-health-text')).toHaveText('100 HP');
@@ -68,7 +72,7 @@ async function pauseAndReturn(page) {
   await expect(page.locator('#player-health-text')).toHaveText('100 HP');
   await expect(page.locator('#opponent-health-text')).toHaveText('100 HP');
   await expect(page.locator('#round-label')).toHaveText('ROUND 1 · 0 — 0');
-  await expect.poll(async () => Number(await page.locator('#timer').textContent())).toBeGreaterThanOrEqual(44);
+  await expect.poll(async () => Number(await page.locator('#timer').textContent())).toBeGreaterThanOrEqual(49);
 }
 
 test('all six fighters and five stages load and change the arena preview', async ({ page }, testInfo) => {
@@ -103,6 +107,35 @@ test('all six fighters and five stages load and change the arena preview', async
     stageFrames.add(await canvasFrame(page));
   }
   expect(stageFrames.size, 'Stage selections must change the actual arena artwork').toBe(5);
+});
+
+
+
+test('escape campaign tells its prologue and opens the first chapter', async ({ page }) => {
+  await page.locator('#game-mode').selectOption('story');
+  await page.locator('#play-button').click();
+  await expect(page.locator('#message-title')).toHaveText('EL RECUENTO NO CUADRA');
+  await expect(page.locator('#message-copy')).toContainText('Sobrevive a tres combates');
+  await page.locator('#continue-button').click();
+  await expect(page.locator('#message-title')).toHaveText('3');
+  await page.locator('#continue-button').click();
+  await expect(page.locator('#arena-message')).toBeHidden();
+  await expect(page.locator('#round-label')).toContainText('CAPÍTULO 1/3');
+  await expect(page.locator('#timer')).toHaveText('50');
+});
+
+test('tournament mode opens with a 50-second first bout and the three-beat intro', async ({ page }) => {
+  await page.locator('#game-mode').selectOption('tournament');
+  await page.locator('#play-button').click();
+  await expect(page.locator('#hud')).toBeVisible();
+  await expect(page.locator('#arena-message')).toBeVisible();
+  await expect(page.locator('#message-title')).toHaveText('3');
+  await page.locator('#continue-button').click();
+  await expect(page.locator('#arena-message')).toBeHidden();
+  await expect(page.locator('#arena-state')).toHaveText('EN COMBATE');
+  await expect(page.locator('#timer')).toHaveText('50');
+  await expect(page.locator('#round-label')).toContainText('TORNEO 1/3');
+  await expect(page.locator('#game-mode')).toBeDisabled();
 });
 
 test('desktop keyboard combat changes health and energy; pause, resume and return work', async ({ page }, testInfo) => {
@@ -181,7 +214,9 @@ test('accessible controls release movement after focus changes and accept assist
   await page.waitForTimeout(500);
   expect(Math.abs((await playerCenter()) - releasePosition), 'Released movement must stop even when keyup targets another control').toBeLessThan(20);
 
-  await page.locator('#play-button').click(); // Reset recovery/energy before assistive activation.
+  await page.locator('#play-button').click();
+  if (await page.locator('#arena-message').isVisible()) await page.locator('#continue-button').click();
+  if (await page.locator('#arena-message').isVisible()) await page.locator('#continue-button').click(); // Reset recovery/energy before assistive activation.
   await page.locator('[data-control="special"]').evaluate(button => button.click());
   await expect.poll(async () => Number(await page.getByRole('meter', { name: 'Energía de tu luchador', exact: true }).getAttribute('aria-valuenow'))).toBeLessThan(80);
 });
@@ -243,12 +278,14 @@ test('brief inputs released before the next frame still trigger their attack', a
 test('complete rounds preserve the score, finish the match and allow a rematch', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Full round UI integration uses the desktop browser clock');
   test.setTimeout(60_000);
+  await page.locator('#game-mode').selectOption('quick');
   await page.locator('#difficulty').selectOption('hard');
   await page.locator('#play-button').click();
+  if (await page.locator('#arena-message').isVisible()) await page.locator('#continue-button').click();
   const waitForRound = async () => {
     // Run real animation frames against virtual browser time, without changing
     // game state or replacing the CPU. An idle player loses to the hard CPU.
-    for (let i = 0; i < 9 && !(await page.locator('#arena-message').isVisible()); i++) await page.clock.runFor(5000);
+    for (let i = 0; i < 11 && !(await page.locator('#arena-message').isVisible()); i++) await page.clock.runFor(5000);
     await expect(page.locator('#arena-message')).toBeVisible();
   };
   await waitForRound();
@@ -260,7 +297,7 @@ test('complete rounds preserve the score, finish the match and allow a rematch',
   await expect(page.locator('#round-label')).toHaveText('ROUND 2 · 0 — 1');
   await expect(page.locator('#player-health-text')).toHaveText('100 HP');
   await expect(page.locator('#opponent-health-text')).toHaveText('100 HP');
-  await expect(page.locator('#timer')).toHaveText('45');
+  await expect(page.locator('#timer')).toHaveText('50');
   await waitForRound();
   await expect(page.locator('#message-title')).toHaveText('HABRÁ REVANCHA');
   await expect(page.locator('#arena-state')).toHaveText('PARTIDA COMPLETADA');
@@ -271,7 +308,7 @@ test('complete rounds preserve the score, finish the match and allow a rematch',
   await expect(page.locator('#round-label')).toHaveText('ROUND 1 · 0 — 0');
   await expect(page.locator('#player-health-text')).toHaveText('100 HP');
   await expect(page.locator('#opponent-health-text')).toHaveText('100 HP');
-  await expect(page.locator('#timer')).toHaveText('45');
+  await expect(page.locator('#timer')).toHaveText('50');
 });
 
 test('enabling sound plays and decodes the supplied Ogg audio', async ({ page }) => {
