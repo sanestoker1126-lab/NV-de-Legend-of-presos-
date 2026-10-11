@@ -1,15 +1,12 @@
 # Atlas integration decisions for the PixiJS branch
 
-This file records decisions from the prior atlas QA work. Runtime additions must preserve character identity and use explicit frame coordinates; a contact sheet is not automatically a production atlas.
-
-## Activated in this branch
-
-- **Tobi, 81 frames, 9×9 at 120×120:** registered the final row (row 8) as a victory animation in `public/assets/catalog.json`. The Pixi renderer now plays that animation when Tobi wins a completed match. Existing runtime atlas dimensions are 1080×1080 and fit the 9×9 geometry. The actual WebP asset should still be compared byte-for-byte or frame-by-frame against the original PNG before treating the image conversion as fully cleared.
+This file records decisions from prior atlas QA. Runtime additions must preserve character identity and use explicit frame coordinates; a contact sheet is not automatically a production atlas.
 
 ## Best next additions from prior QA
 
-- **Estoker V3 Engine Ready:** 103-frame master, explicit move names, 0 near-duplicate pairs in the prior audit, plus 46 special/super/victory frames. Use this V3 package, not the older staging build that is missing frame 43. It is not activated in this Pixi roster yet because its source atlas and metadata are not present under `public/assets` in this branch.
+- **Estoker V3 Engine Ready:** 103-frame master, explicit move names, 0 near-duplicate pairs in the prior audit, plus 46 special/super/victory frames. Use this V3 package, not the older staging build that is missing frame 43. It is not active in this Pixi roster because its source atlas and metadata are not yet present under `public/assets` in this branch.
 - **Wasa V4 Engine Ready:** 56 base frames + 16 specials, 72 total, with JASSO/JSON metadata and previously reported 0 out-of-bounds rectangles. Its frame rectangles are variable, so it needs the variable-rectangle Pixi adapter before activation. Do not add a second 56-frame base from the superseded package.
+- **Tobi final 81-frame atlas:** 9×9 cells at 120×120 with explicit movement metadata. The source PNG in the library is visually clean, but the current runtime WebP files show visible color-block/streak artifacts in inspection. Keep the extra victory row disabled until a clean source atlas replaces the converted runtime file.
 - **LUCHADOR08 mapped JASSO:** 90 body frames + 21 FX; keep staged until its combat states are explicitly mapped. Do not infer idle/light/heavy states from filenames alone.
 
 ## Keep out of runtime
