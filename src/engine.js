@@ -2,7 +2,7 @@
  * Dependency-free combat simulation. Coordinates use a 960 × 420 arena;
  * fighter.x is its horizontal center, and fighter.y is height ABOVE the floor.
  * stepMatch mutates its match and returns it. dt is seconds, capped at 0.05.
- * Input: {left,right,jump,block,punch,kick,special}; jump/attacks use press edges.
+ * Input: {left,right,jump,block,punch,kick,special,hidden}; attacks use press edges.
  * Public fighter actionTime is the remaining animation/recovery time in seconds.
  * events only describe the most recent step and can drive sound/visual effects.
  */
