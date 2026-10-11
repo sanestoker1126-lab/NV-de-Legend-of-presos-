@@ -17,6 +17,7 @@ const queuedPresses = new Set();
 const edgeControls = new Set(['jump', 'punch', 'kick', 'special', 'hidden']);
 const keyMap = { KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right', KeyW: 'jump', ArrowUp: 'jump', KeyS: 'block', ArrowDown: 'block', KeyJ: 'punch', KeyK: 'kick', KeyL: 'special', KeyI: 'hidden' };
 const colorways = ['#665a36', '#516442', '#4e5367', '#794e35', '#5b4259', '#485c5c'];
+const hiddenPalette = { tobi: '#ff7847', mateo: '#b9dfe6', nadia: '#f3a8ff', semillas: '#d8e77a', oscuro: '#9a9fff', callejero: '#ffd483' };
 let catalog;
 let selectedFighter = 'tobi';
 let selectedStage = 'patio';
@@ -305,7 +306,7 @@ function handleEvents() {
     if (event.type === 'hit') {
       if (!reducedMotion) {
         const count = event.attack === 'hidden' ? 42 : event.attack === 'special' ? 22 : event.blocked ? 10 : 16;
-        const color = event.blocked ? '#b9dfe6' : event.attack === 'hidden' ? '#f3a8ff' : event.attack === 'special' ? '#ff7847' : '#ffd483';
+        const color = event.blocked ? '#b9dfe6' : event.attack === 'hidden' ? (hiddenPalette[match.fighters[event.side].id] || '#ff7847') : event.attack === 'special' ? '#ff7847' : '#ffd483';
         for (let i = 0; i < count; i += 1) {
           const angle = (Math.PI * 2 * i / count) + Math.random() * 0.25;
           const speed = event.attack === 'hidden' ? 110 + Math.random() * 330 : 70 + Math.random() * 220;
@@ -315,7 +316,10 @@ function handleEvents() {
       }
       playSound(event.blocked ? 'grab' : 'punchHeavy', event.attack === 'hidden' ? 0.5 : 0.25);
     } else if (event.type === 'hiddenSpecial') {
-      if (!reducedMotion) for (let i = 0; i < 24; i += 1) particles.push({ x: match.fighters[event.side].x, y: ARENA.groundY - 115, vx: (Math.random() - 0.5) * 180, vy: (Math.random() - 0.5) * 200, life: 0.65, maxLife: 0.65, size: 4 + Math.random() * 6, color: '#ff7847', shape: 'ring' });
+      const fighter = match.fighters[event.side];
+      const color = hiddenPalette[fighter.id] || '#ff7847';
+      if (!reducedMotion) for (let i = 0; i < 24; i += 1) particles.push({ x: fighter.x, y: ARENA.groundY - 115, vx: (Math.random() - 0.5) * 180, vy: (Math.random() - 0.5) * 200, life: 0.65, maxLife: 0.65, size: 4 + Math.random() * 6, color, shape: 'ring' });
+      announce(`${fighterById(fighter.id).name.toUpperCase()} · ESPECIAL OCULTO`);
       playSound('special', 0.5);
     } else if (event.type === 'punch') playSound('punchLight', 0.25);
     else if (event.type === 'kick') playSound('kickLight', 0.3);
