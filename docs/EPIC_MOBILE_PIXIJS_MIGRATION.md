@@ -55,6 +55,7 @@ A candidate atlas is accepted only when:
 - Character selection and match entry use up to three verified atlas actions (`idle`, `walk`, `punch`/`kick`) before returning to idle; unavailable animation rows fall back safely.
 - Rounds use a 50-second clock. The engine adds a high-cost hidden special at 80 energy, exposed through `I` on keyboard and the `MAX` touch control.
 - The renderer places small idle catalog fighters in the background and reuses a fixed particle pool for sparks, streaks and rings. It does not invent or promote unverified atlas animations.
+- Hidden-special VFX and particle colors are keyed to the six catalog fighter IDs, so each fighter has a distinct signature without requiring unverified art assets.
 
 ## Combat feedback parity
 
