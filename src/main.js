@@ -29,6 +29,7 @@ let wins = 0;
 let displayedStatus = '';
 let storySeen = false;
 let tournament = null;
+let campaign = null;
 let introSequence = null;
 let selectionPulse = 0;
 const audioPool = new Map();
@@ -128,7 +129,7 @@ function getInput() {
 function startGame() {
   if (!catalog) return;
   if (!storySeen && $('game-mode').value === 'story') {
-    showMessage('EXPEDIENTE PUENTE GRANDE · 03:17 AM', 'EL RECUENTO NO CUADRA', 'Las luces del patio parpadean. Falta un preso, sobran rumores y los pasillos empiezan a cerrarse. Sobrevive a los combates, reúne aliados y encuentra la ruta antes del amanecer.', 'COMENZAR EL ESCAPE', () => { storySeen = true; beginMatch(); });
+    showMessage('EXPEDIENTE PUENTE GRANDE · 03:17 AM', 'EL RECUENTO NO CUADRA', 'Las luces del patio parpadean. Falta un preso, sobran rumores y los pasillos empiezan a cerrarse. Sobrevive a tres combates, reúne aliados y encuentra la ruta antes del amanecer.', 'COMENZAR EL ESCAPE', () => { storySeen = true; campaign = makeEscapeCampaign(); tournament = null; beginMatch(); });
     $('back-button').textContent = 'VOLVER AL PATIO';
     $('arena-shell').scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth', block: 'center' });
     return;
@@ -136,13 +137,22 @@ function startGame() {
   if ($('game-mode').value === 'tournament') {
     const opponents = catalog.fighters.filter(fighter => fighter.id !== selectedFighter).map(fighter => fighter.id);
     tournament = { opponents: opponents.slice(0, Math.min(3, opponents.length)), index: 0, wins: 0 };
-  } else tournament = null;
+    campaign = null;
+  } else if ($('game-mode').value === 'story') {
+    campaign = makeEscapeCampaign();
+    tournament = null;
+  } else { tournament = null; campaign = null; }
   beginMatch();
+}
+function makeEscapeCampaign() {
+  const opponents = catalog.fighters.filter(fighter => fighter.id !== selectedFighter).map(fighter => fighter.id);
+  return { opponents: opponents.slice(0, Math.min(3, opponents.length)), index: 0, wins: 0 };
 }
 function beginMatch() {
   clearInput();
   const options = catalog.fighters.filter(fighter => fighter.id !== selectedFighter);
-  const opponentId = tournament ? tournament.opponents[tournament.index] : options[Math.floor(Math.random() * options.length)].id;
+  const series = tournament || campaign;
+  const opponentId = series ? series.opponents[series.index] : options[Math.floor(Math.random() * options.length)].id;
   const opponent = fighterById(opponentId);
   match = createMatch({ playerId: selectedFighter, opponentId: opponent.id, difficulty: $('difficulty').value, duration: 50 });
   setPaused(match, true);
@@ -188,7 +198,7 @@ function finishIntro() {
   $('pause-button').focus({ preventScroll: true });
 }
 function returnToSelection() {
-  match = null; tournament = null; introSequence = null; particles = []; clearInput();
+  match = null; tournament = null; campaign = null; introSequence = null; particles = []; clearInput();
   $('hud').hidden = true; $('arena-caption').hidden = false; $('arena-message').hidden = true;
   $('pause-button').hidden = true; $('touch-controls').hidden = true;
   $('play-button').textContent = 'INICIAR ESCAPE'; $('arena-state').textContent = 'EL PATIO TE ESPERA'; $('round-label').textContent = 'CAMPAÑA · 50 SEGUNDOS';
@@ -219,29 +229,35 @@ function showResult() {
   if (match.status === 'roundOver') {
     const title = match.roundWinner === 'player' ? 'ROUND PARA TI' : match.roundWinner === 'draw' ? 'EMPATE' : 'ROUND PARA LA CPU';
     const { player, opponent } = match.fighters;
-    const chapterBeat = match.round === 1 ? 'La pelea abre un hueco en el patio. Al fondo, alguien señala la puerta de servicio.' : 'Las sirenas se acercan. La ruta por los pasillos queda como única salida.';
-    showMessage(`ROUND ${match.round} · ${tournament ? 'TORNEO DEL PATIO' : 'CAPÍTULO DE FUGA'}`, title, `Marcador ${player.wins} — ${opponent.wins}. ${chapterBeat}`, 'SIGUIENTE ROUND', () => {
+    const chapterBeat = campaign ? (campaign.index === 0 ? 'La pelea abre un hueco en el patio. Al fondo, alguien señala la puerta de servicio.' : campaign.index === 1 ? 'En los pasillos, las llaves suenan cada vez más cerca.' : 'La carretera ya se escucha detrás del último portón.') : tournament ? 'Cada victoria decide quién manda en el patio.' : match.round === 1 ? 'La pelea abre un hueco en el patio. Al fondo, alguien señala la puerta de servicio.' : 'Las sirenas se acercan. La ruta por los pasillos queda como única salida.';
+    showMessage(`ROUND ${match.round} · ${tournament ? 'TORNEO DEL PATIO' : campaign ? 'CAPÍTULO DE FUGA' : 'COMBATE RÁPIDO'}`, title, `Marcador ${player.wins} — ${opponent.wins}. ${chapterBeat}`, 'SIGUIENTE ROUND', () => {
       clearInput(); startNextRound(match); displayedStatus = ''; particles = [];
       $('arena-message').hidden = true; $('pause-button').hidden = false; updateHud();
       $('pause-button').focus({ preventScroll: true });
     });
   } else if (match.status === 'finished') {
     const won = match.winner === 'player';
-    if (tournament && won && tournament.index < tournament.opponents.length - 1) {
-      tournament.wins += 1;
-      const nextName = fighterById(tournament.opponents[tournament.index + 1]).name;
-      showMessage('TORNEO DEL PATIO · CLASIFICACIÓN', 'SIGUES EN PIE', `Combate ${tournament.index + 1} superado. El siguiente rival es ${nextName}. Cada victoria acerca la salida.`, 'SIGUIENTE COMBATE', () => { tournament.index += 1; beginMatch(); });
+    const series = tournament || campaign;
+    if (series && won && series.index < series.opponents.length - 1) {
+      series.wins += 1;
+      const nextName = fighterById(series.opponents[series.index + 1]).name;
+      const isTournament = Boolean(tournament);
+      const eyebrow = isTournament ? 'TORNEO DEL PATIO · CLASIFICACIÓN' : `CAPÍTULO ${series.index + 1} COMPLETADO`;
+      const title = isTournament ? 'SIGUES EN PIE' : series.index === 0 ? 'LA PUERTA DE SERVICIO' : 'LA RUTA SE ABRE';
+      const copy = isTournament ? `Combate ${series.index + 1} superado. El siguiente rival es ${nextName}. Cada victoria decide quién manda en el patio.` : series.index === 0 ? `El patio queda atrás. ${nextName} controla el pasillo que lleva a la zona de servicio. La fuga sigue.` : `Queda un último rival: ${nextName}. Detrás de él está la salida y ya se oyen las sirenas.`;
+      showMessage(eyebrow, title, copy, isTournament ? 'SIGUIENTE COMBATE' : 'CONTINUAR LA FUGA', () => { series.index += 1; beginMatch(); });
       return;
     }
     if (won) {
       wins += 1; $('wins-count').textContent = String(wins).padStart(2, '0');
       try { localStorage.setItem('puente-grande-wins', String(wins)); } catch { /* Optional persistence. */ }
     }
-    const title = tournament && won && tournament.index === tournament.opponents.length - 1 ? 'CAMPEÓN DEL PATIO' : won ? 'EL PATIO ES TUYO' : match.winner === 'draw' ? 'NADIE SE RINDE' : 'HABRÁ REVANCHA';
+    const title = tournament && won && tournament.index === tournament.opponents.length - 1 ? 'CAMPEÓN DEL PATIO' : campaign && won && campaign.index === campaign.opponents.length - 1 ? 'CRUZASTE EL PORTÓN' : won ? 'EL PATIO ES TUYO' : match.winner === 'draw' ? 'NADIE SE RINDE' : 'HABRÁ REVANCHA';
     const score = `${match.fighters.player.wins} — ${match.fighters.opponent.wins}`;
-    const chapter = tournament ? (won && tournament.index === tournament.opponents.length - 1 ? 'Ganaste el torneo. El último portón queda a tu alcance.' : won ? 'Ganaste este combate, pero el torneo sigue.' : 'El torneo termina aquí. La fuga tendrá que esperar.') : won ? 'El patio quedó atrás. La ruta de escape sigue abierta.' : 'Cada round deja una lección. El penal no ha terminado de contar tu historia.';
-    showMessage(tournament ? 'TORNEO DEL PATIO · RESULTADO' : 'CAPÍTULO COMPLETADO', title, `${score} · ${chapter}`, 'REPETIR', () => { tournament = null; startGame(); });
+    const chapter = tournament ? (won && tournament.index === tournament.opponents.length - 1 ? 'Ganaste el torneo. El último portón queda a tu alcance.' : won ? 'Ganaste este combate, pero el torneo sigue.' : 'El torneo termina aquí. La fuga tendrá que esperar.') : campaign ? (won && campaign.index === campaign.opponents.length - 1 ? 'La ruta queda libre. Al amanecer, el patio ya es parte del pasado.' : 'La fuga se detiene aquí. El penal sigue en alerta y habrá que intentarlo otra vez.') : won ? 'El patio quedó atrás. La ruta de escape sigue abierta.' : 'Cada round deja una lección. El penal no ha terminado de contar tu historia.';
+    showMessage(tournament ? 'TORNEO DEL PATIO · RESULTADO' : campaign ? 'EXPEDIENTE DE FUGA · FINAL' : 'COMBATE RÁPIDO · RESULTADO', title, `${score} · ${chapter}`, 'REPETIR', () => { tournament = null; campaign = null; startGame(); });
     if (tournament && (!won || tournament.index === tournament.opponents.length - 1)) tournament = null;
+    if (campaign && (!won || campaign.index === campaign.opponents.length - 1)) campaign = null;
     playSound('remate_g', 0.3);
   }
 }
@@ -256,7 +272,7 @@ function updateHud() {
     $(`${side}-energy`).parentElement.setAttribute('aria-valuenow', String(Math.round(fighter.energy)));
   }
   $('timer').textContent = String(Math.ceil(match.timeLeft)).padStart(2, '0');
-  $('round-label').textContent = tournament ? `TORNEO ${tournament.index + 1}/${tournament.opponents.length} · ROUND ${match.round} · ${match.fighters.player.wins} — ${match.fighters.opponent.wins}` : `ROUND ${match.round} · ${match.fighters.player.wins} — ${match.fighters.opponent.wins}`;
+  $('round-label').textContent = tournament ? `TORNEO ${tournament.index + 1}/${tournament.opponents.length} · ROUND ${match.round} · ${match.fighters.player.wins} — ${match.fighters.opponent.wins}` : campaign ? `CAPÍTULO ${campaign.index + 1}/${campaign.opponents.length} · ROUND ${match.round} · ${match.fighters.player.wins} — ${match.fighters.opponent.wins}` : `ROUND ${match.round} · ${match.fighters.player.wins} — ${match.fighters.opponent.wins}`;
   $('arena-state').textContent = match.paused ? 'PARTIDA EN PAUSA' : match.status === 'playing' ? 'EN COMBATE' : match.status === 'finished' ? 'PARTIDA COMPLETADA' : 'ROUND COMPLETADO';
 }
 
