@@ -3,11 +3,12 @@ import '@fontsource/dm-sans/latin-400.css';
 import '@fontsource/dm-sans/latin-500.css';
 import '@fontsource/dm-sans/latin-700.css';
 import './style.css';
+import { createPixiRenderer } from './pixi-renderer.js';
 import { createMatch, stepMatch, startNextRound, setPaused, ARENA } from './engine.js';
 
 const $ = id => document.getElementById(id);
-const canvas = $('game-canvas');
-const context = canvas.getContext('2d');
+const canvasHost = $('arena-viewport');
+let pixiRenderer = null;
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`;
 const textures = new Map();
 const keyboard = new Set();
@@ -56,16 +57,12 @@ function buildSelection() {
     const portrait = document.createElement('div'); portrait.className = 'fighter-portrait';
     const number = document.createElement('span'); number.className = 'fighter-index'; number.textContent = `${String(index + 1).padStart(2, '0')} / PG`;
     const badge = document.createElement('span'); badge.className = 'fighter-badge'; badge.textContent = '✓'; badge.hidden = fighter.id !== selectedFighter;
-    const imageCanvas = document.createElement('canvas'); imageCanvas.width = 240; imageCanvas.height = 180; imageCanvas.setAttribute('aria-hidden', 'true');
-    portrait.append(number, imageCanvas, badge);
+    const portraitImage = document.createElement('img'); portraitImage.className = 'fighter-portrait-image'; portraitImage.src = assetUrl(fighter.path); portraitImage.alt = ''; portraitImage.loading = 'lazy';
+    portrait.append(number, portraitImage, badge);
     const description = document.createElement('div'); description.className = 'fighter-description';
     const name = document.createElement('span'); name.className = 'fighter-name'; name.textContent = fighter.name.toUpperCase();
     const hint = document.createElement('span'); hint.textContent = fighter.id === selectedFighter ? 'ELEGIDO' : '+';
     description.append(name, hint); button.append(portrait, description);
-    const bounds = fighter.portrait.alphaBounds;
-    const scale = Math.min(150 / bounds.height, 160 / bounds.width);
-    const ctx = imageCanvas.getContext('2d');
-    ctx.drawImage(textures.get(fighter.path), bounds.x, bounds.y, bounds.width, bounds.height, 120 - bounds.width * scale / 2, 178 - bounds.height * scale, bounds.width * scale, bounds.height * scale);
     button.addEventListener('click', () => { if (!match) selectFighter(fighter.id); });
     $('fighters-grid').append(button);
   }
@@ -261,22 +258,9 @@ function handleEvents() {
 }
 function render(dt) {
   if (!catalog) return;
-  const stage = stageById(selectedStage);
-  context.drawImage(textures.get(stage.path), 0, 0, ARENA.width, ARENA.height);
-  context.fillStyle = '#0c140f24'; context.fillRect(0, 0, ARENA.width, ARENA.height);
-  if (match) {
-    renderFighter(match.fighters.player, elapsed);
-    renderFighter(match.fighters.opponent, elapsed + 0.2);
-  } else {
-    const opponent = catalog.fighters.find(fighter => fighter.id !== selectedFighter && fighter.id === 'mateo') || catalog.fighters.find(fighter => fighter.id !== selectedFighter);
-    renderFighter({ id: selectedFighter, x: 580, y: 0, facing: 1, action: 'idle' }, elapsed, true);
-    renderFighter({ id: opponent.id, x: 785, y: 0, facing: -1, action: 'idle' }, elapsed + 0.3, true);
-  }
-  for (const particle of particles) {
-    if (!match?.paused) { particle.life -= dt; particle.x += particle.vx * dt; particle.y += particle.vy * dt; }
-    context.globalAlpha = Math.max(0, particle.life / 0.28); context.fillStyle = particle.color; context.fillRect(particle.x, particle.y, 4, 4);
-  }
-  context.globalAlpha = 1; particles = particles.filter(particle => particle.life > 0);
+  if (!match?.paused) { for (const particle of particles) { particle.life -= dt; particle.x += particle.vx * dt; particle.y += particle.vy * dt; } }
+  particles = particles.filter(particle => particle.life > 0);
+  pixiRenderer?.draw({ stage: selectedStage, catalog, match, elapsed, particles });
 }
 function frame(now) {
   const dt = Math.min((now - lastFrame) / 1000, 0.05); lastFrame = now;
@@ -340,8 +324,9 @@ async function init() {
     if (!response.ok) throw new Error('Catálogo no disponible');
     catalog = await response.json();
     await Promise.all([...catalog.fighters, ...catalog.backgrounds].map(item => loadImage(item.path)));
-    buildSelection(); $('loading-message').hidden = true; $('play-button').disabled = false;
-    $('arena-state').textContent = 'EL PATIO TE ESPERA'; requestAnimationFrame(frame);
+    pixiRenderer = await createPixiRenderer(canvasHost, { assetUrl, reducedMotion });
+    $('loading-message').hidden = true; $('play-button').disabled = false;
+    $('arena-state').textContent = 'EL PATIO TE ESPERA'; buildSelection(); requestAnimationFrame(frame);
   } catch (error) {
     $('loading-message').textContent = 'No pudimos cargar el patio. Recarga la página para intentarlo de nuevo.';
     announce('Error al cargar los recursos del juego.'); console.error(error);
