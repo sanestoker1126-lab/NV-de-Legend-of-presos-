@@ -33,13 +33,12 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
   app.stage.addChild(scene);
 
   const textureCache = new Map();
+  const frameTextureCache = new Map();
   const spriteCache = new Map();
   const shadowCache = new Map();
   let background = null;
   let shade = null;
-  let backgroundRequest = null;
   let destroyed = false;
-  let drawToken = 0;
 
   const layout = () => {
     const scale = Math.min(host.clientWidth / ARENA.width, host.clientHeight / ARENA.height);
@@ -50,59 +49,68 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     );
   };
 
-  async function textureFor(path) {
+  async function preload(catalog) {
+    const paths = [...new Set([
+      ...catalog.fighters.map(fighter => fighter.path),
+      ...catalog.backgrounds.map(stage => stage.path),
+    ])];
+    await Promise.all(paths.map(async path => {
+      const url = assetUrl(path);
+      if (!textureCache.has(url)) textureCache.set(url, await Assets.load(url));
+    }));
+  }
+
+  function textureFor(path) {
     const url = assetUrl(path);
-    if (!textureCache.has(url)) textureCache.set(url, Assets.load(url));
-    return textureCache.get(url);
+    const texture = textureCache.get(url);
+    if (!texture) throw new Error(`Atlas PixiJS no precargado: ${path}`);
+    return texture;
   }
 
-  async function setBackground(path) {
-    if (background?.label === path) return;
-    if (backgroundRequest?.path === path) return backgroundRequest.promise;
-
-    const promise = (async () => {
-      const texture = await textureFor(path);
-      if (destroyed || backgroundRequest?.path !== path || backgroundRequest?.promise !== promise) return;
-      if (background) backgroundLayer.removeChild(background);
-      background = new Sprite(texture);
-      background.label = path;
-      background.width = ARENA.width;
-      background.height = ARENA.height;
-      backgroundLayer.addChild(background);
-      if (shade) backgroundLayer.removeChild(shade);
-      shade = new Graphics().rect(0, 0, ARENA.width, ARENA.height).fill({ color: 0x07100b, alpha: 0.13 });
-      backgroundLayer.addChild(shade);
-    })();
-    backgroundRequest = { path, promise };
-    try {
-      await promise;
-    } finally {
-      if (backgroundRequest?.promise === promise) backgroundRequest = null;
+  function frameTextureFor(info, baseTexture, row, column) {
+    const url = assetUrl(info.path);
+    const key = `${url}:${row}:${column}`;
+    if (!frameTextureCache.has(key)) {
+      const frame = new Rectangle(
+        column * info.frameWidth, row * info.frameHeight,
+        info.frameWidth, info.frameHeight,
+      );
+      frameTextureCache.set(key, new Texture({ source: baseTexture.source, frame }));
     }
+    return frameTextureCache.get(key);
   }
 
-  async function renderFighter(fighter, info, time, slot, token) {
+  function setBackground(path) {
+    if (background?.label === path) return;
+    const texture = textureFor(path);
+    if (background) backgroundLayer.removeChild(background);
+    background = new Sprite(texture);
+    background.label = path;
+    background.width = ARENA.width;
+    background.height = ARENA.height;
+    backgroundLayer.addChild(background);
+    if (shade) backgroundLayer.removeChild(shade);
+    shade = new Graphics().rect(0, 0, ARENA.width, ARENA.height).fill({ color: 0x07100b, alpha: 0.13 });
+    backgroundLayer.addChild(shade);
+  }
+
+  function renderFighter(fighter, info, time, slot) {
     if (!info) return;
-    const baseTexture = await textureFor(info.path);
-    if (destroyed || token !== drawToken) return;
+    const baseTexture = textureFor(info.path);
     const action = fighter.action === 'hit' ? 'hurt' : fighter.action === 'special' ? 'punch' : fighter.action;
     const animation = info.animations[action] || info.animations.idle;
     const frame = Math.floor((reducedMotion && slot.startsWith('preview') ? 0 : time) * (action === 'idle' ? 7 : 15)) % animation.frames;
     const column = animation.startColumn + frame;
-    const frameRect = new Rectangle(
-      column * info.frameWidth, animation.row * info.frameHeight,
-      info.frameWidth, info.frameHeight,
-    );
+    const frameTexture = frameTextureFor(info, baseTexture, animation.row, column);
     const key = slot;
     let sprite = spriteCache.get(key);
     if (!sprite) {
-      sprite = new Sprite(new Texture({ source: baseTexture.source, frame: frameRect }));
+      sprite = new Sprite(frameTexture);
       sprite.anchor.set(0.5, 1);
       spriteCache.set(key, sprite);
       fighterLayer.addChild(sprite);
-    } else {
-      sprite.texture.frame = frameRect;
-      sprite.texture.updateUvs();
+    } else if (sprite.texture !== frameTexture) {
+      sprite.texture = frameTexture;
     }
     const scale = info.frameHeight === 120 ? 1.92 : 1.72;
     sprite.scale.set(scale * fighter.facing, scale);
@@ -139,28 +147,21 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     });
   }
 
-  async function draw({ stage, catalog, match, elapsed, particles = [] }) {
+  function draw({ stage, catalog, match, elapsed, particles = [] }) {
     if (destroyed) return;
-    const token = ++drawToken;
     const stageInfo = catalog.backgrounds.find(item => item.id === stage);
-    if (stageInfo) await setBackground(stageInfo.path);
-    if (destroyed || token !== drawToken) return;
+    if (stageInfo) setBackground(stageInfo.path);
     if (!match) {
       const left = catalog.fighters.find(f => f.id === 'tobi') || catalog.fighters[0];
       const right = catalog.fighters.find(f => f.id !== left.id && f.id === 'mateo') || catalog.fighters.find(f => f.id !== left.id);
-      await Promise.all([
-        renderFighter({ id: left.id, x: 580, y: 0, facing: 1, action: 'idle' }, left, elapsed, 'preview-player', token),
-        renderFighter({ id: right.id, x: 785, y: 0, facing: -1, action: 'idle' }, right, elapsed + 0.3, 'preview-opponent', token),
-      ]);
+      renderFighter({ id: left.id, x: 580, y: 0, facing: 1, action: 'idle' }, left, elapsed, 'preview-player');
+      renderFighter({ id: right.id, x: 785, y: 0, facing: -1, action: 'idle' }, right, elapsed + 0.3, 'preview-opponent');
     } else {
       const player = catalog.fighters.find(f => f.id === match.fighters.player.id);
       const opponent = catalog.fighters.find(f => f.id === match.fighters.opponent.id);
-      await Promise.all([
-        renderFighter(match.fighters.player, player, elapsed, 'combat-player', token),
-        renderFighter(match.fighters.opponent, opponent, elapsed + 0.2, 'combat-opponent', token),
-      ]);
+      renderFighter(match.fighters.player, player, elapsed, 'combat-player');
+      renderFighter(match.fighters.opponent, opponent, elapsed + 0.2, 'combat-opponent');
     }
-    if (destroyed || token !== drawToken) return;
     updateParticles(particles);
     app.renderer.render(app.stage);
   }
@@ -178,6 +179,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
 
   return {
     canvas: app.canvas,
+    preload,
     draw,
     destroy() {
       destroyed = true;
@@ -185,6 +187,8 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
       window.removeEventListener('orientationchange', resize);
       window.visualViewport?.removeEventListener('resize', resize);
       app.destroy({ removeView: true }, { children: true, texture: false, textureSource: false });
+      for (const texture of frameTextureCache.values()) texture.destroy(false);
+      frameTextureCache.clear();
       textureCache.clear();
       spriteCache.clear();
       shadowCache.clear();
