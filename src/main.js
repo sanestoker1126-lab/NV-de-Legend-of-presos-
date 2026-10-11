@@ -303,6 +303,7 @@ async function init() {
     catalog = await response.json();
     await Promise.all([...catalog.fighters, ...catalog.backgrounds].map(item => loadImage(item.path)));
     pixiRenderer = await createPixiRenderer(canvasHost, { assetUrl, reducedMotion });
+    await pixiRenderer.preload(catalog);
     $('loading-message').hidden = true; $('play-button').disabled = false;
     $('arena-state').textContent = 'EL PATIO TE ESPERA'; buildSelection(); requestAnimationFrame(frame);
   } catch (error) {
