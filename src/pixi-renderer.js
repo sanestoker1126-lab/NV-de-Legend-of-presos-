@@ -1,4 +1,4 @@
-import { Application, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
+import { Application, Assets, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import { ARENA } from './engine.js';
 
 /**
@@ -49,7 +49,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
 
   async function textureFor(path) {
     const url = assetUrl(path);
-    if (!textureCache.has(url)) textureCache.set(url, Texture.fromURL(url));
+    if (!textureCache.has(url)) textureCache.set(url, Assets.load(url));
     return textureCache.get(url);
   }
 
