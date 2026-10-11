@@ -3,11 +3,12 @@ import '@fontsource/dm-sans/latin-400.css';
 import '@fontsource/dm-sans/latin-500.css';
 import '@fontsource/dm-sans/latin-700.css';
 import './style.css';
+import { createPixiRenderer } from './pixi-renderer.js';
 import { createMatch, stepMatch, startNextRound, setPaused, ARENA } from './engine.js';
 
 const $ = id => document.getElementById(id);
-const canvas = $('game-canvas');
-const context = canvas.getContext('2d');
+const canvasHost = $('arena-viewport');
+let pixiRenderer = null;
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`;
 const textures = new Map();
 const keyboard = new Set();
@@ -223,32 +224,6 @@ $('sound-toggle').addEventListener('click', () => {
   else for (const pool of audioPool.values()) for (const audio of pool) audio.pause();
 });
 
-function renderFighter(fighter, time, preview = false) {
-  const info = fighterById(fighter.id);
-  const image = textures.get(info.path);
-  const action = fighter.action === 'hit' ? 'hurt' : fighter.action === 'special' ? 'punch' : fighter.action;
-  const animation = info.animations[action] || info.animations.idle;
-  const frame = Math.floor((reducedMotion && preview ? 0 : time) * (action === 'idle' ? 7 : 15)) % animation.frames;
-  const column = animation.startColumn + frame;
-  const scale = info.frameHeight === 120 ? 1.92 : 1.72;
-  const width = info.frameWidth * scale;
-  const height = info.frameHeight * scale;
-  const ground = ARENA.groundY + 5;
-  context.save();
-  context.fillStyle = '#05090770';
-  context.beginPath(); context.ellipse(fighter.x, ground + 2, 47, 9, 0, 0, Math.PI * 2); context.fill();
-  context.translate(fighter.x, ground - fighter.y);
-  context.scale(fighter.facing, 1);
-  if (fighter.action === 'special') { context.shadowColor = '#ff9a58'; context.shadowBlur = reducedMotion ? 0 : 24; }
-  context.drawImage(image, column * info.frameWidth, animation.row * info.frameHeight, info.frameWidth, info.frameHeight, -width / 2, -height + 12, width, height);
-  if (fighter.action === 'block') {
-    context.strokeStyle = '#acd9ea99'; context.lineWidth = 3; context.beginPath(); context.arc(0, -95, 57, -1.4, 1.4); context.stroke();
-  }
-  if (fighter.action === 'special' && !reducedMotion) {
-    context.strokeStyle = '#ff784766'; context.lineWidth = 7; context.beginPath(); context.arc(36, -90, 48 + Math.sin(time * 16) * 8, -1.3, 1.3); context.stroke();
-  }
-  context.restore();
-}
 function handleEvents() {
   for (const event of match.events) {
     if (event.type === 'hit') {
@@ -261,22 +236,9 @@ function handleEvents() {
 }
 function render(dt) {
   if (!catalog) return;
-  const stage = stageById(selectedStage);
-  context.drawImage(textures.get(stage.path), 0, 0, ARENA.width, ARENA.height);
-  context.fillStyle = '#0c140f24'; context.fillRect(0, 0, ARENA.width, ARENA.height);
-  if (match) {
-    renderFighter(match.fighters.player, elapsed);
-    renderFighter(match.fighters.opponent, elapsed + 0.2);
-  } else {
-    const opponent = catalog.fighters.find(fighter => fighter.id !== selectedFighter && fighter.id === 'mateo') || catalog.fighters.find(fighter => fighter.id !== selectedFighter);
-    renderFighter({ id: selectedFighter, x: 580, y: 0, facing: 1, action: 'idle' }, elapsed, true);
-    renderFighter({ id: opponent.id, x: 785, y: 0, facing: -1, action: 'idle' }, elapsed + 0.3, true);
-  }
-  for (const particle of particles) {
-    if (!match?.paused) { particle.life -= dt; particle.x += particle.vx * dt; particle.y += particle.vy * dt; }
-    context.globalAlpha = Math.max(0, particle.life / 0.28); context.fillStyle = particle.color; context.fillRect(particle.x, particle.y, 4, 4);
-  }
-  context.globalAlpha = 1; particles = particles.filter(particle => particle.life > 0);
+  if (!match?.paused) { for (const particle of particles) { particle.life -= dt; particle.x += particle.vx * dt; particle.y += particle.vy * dt; } }
+  particles = particles.filter(particle => particle.life > 0);
+  pixiRenderer?.draw({ stage: selectedStage, catalog, match, selectedFighter, elapsed, particles });
 }
 function frame(now) {
   const dt = Math.min((now - lastFrame) / 1000, 0.05); lastFrame = now;
@@ -340,8 +302,10 @@ async function init() {
     if (!response.ok) throw new Error('Catálogo no disponible');
     catalog = await response.json();
     await Promise.all([...catalog.fighters, ...catalog.backgrounds].map(item => loadImage(item.path)));
-    buildSelection(); $('loading-message').hidden = true; $('play-button').disabled = false;
-    $('arena-state').textContent = 'EL PATIO TE ESPERA'; requestAnimationFrame(frame);
+    pixiRenderer = await createPixiRenderer(canvasHost, { assetUrl, reducedMotion });
+    await pixiRenderer.preload(catalog);
+    $('loading-message').hidden = true; $('play-button').disabled = false;
+    $('arena-state').textContent = 'EL PATIO TE ESPERA'; buildSelection(); requestAnimationFrame(frame);
   } catch (error) {
     $('loading-message').textContent = 'No pudimos cargar el patio. Recarga la página para intentarlo de nuevo.';
     announce('Error al cargar los recursos del juego.'); console.error(error);

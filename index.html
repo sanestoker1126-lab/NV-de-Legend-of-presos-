@@ -18,21 +18,21 @@
       <main>
         <section class="arcade-section" id="jugar" aria-labelledby="main-title">
           <div class="intro">
-            <span class="eyebrow"><span class="live-dot"></span> HECHO PARA ENTRAR AL RUEDO</span>
-            <h1 id="main-title">EL PATIO<br />ES <span>TUYO.</span></h1>
-            <p class="intro-copy">Aquí cada golpe cuenta.<br /> Elige a tu luchador. Deja tu marca.</p>
+            <span class="eyebrow"><span class="live-dot"></span> EL PENAL · COMBATE SIN REGLAS</span>
+            <h1 id="main-title">LA LEY<br />ES <span>PELEAR.</span></h1>
+            <p class="intro-copy">No hay salida fácil.<br /> Elige tu peleador. Domina el patio.</p>
             <div class="match-config">
               <label for="difficulty">TU RIVAL</label>
               <div class="select-wrapper"><select id="difficulty"><option value="easy">CPU · Principiante</option><option value="normal" selected>CPU · Callejero</option><option value="hard">CPU · Veterano</option></select><span aria-hidden="true">⌄</span></div>
-              <button class="primary-button" id="play-button" disabled>ENTRAR AL PATIO <span aria-hidden="true">↗</span></button>
+              <button class="primary-button" id="play-button" disabled>INICIAR COMBATE <span aria-hidden="true">↗</span></button>
               <span class="game-specs">1 JUGADOR <i></i> AL MEJOR DE 3 <i></i> SIN DESCARGAS</span>
             </div>
             <div class="session-stats"><span class="stats-value" id="wins-count">00</span><span>VICTORIAS<br /><span class="muted">EN ESTE DISPOSITIVO</span></span></div>
           </div>
           <div class="arcade-machine">
             <div class="arena-topline"><span><span class="live-dot"></span> <span id="arena-state">PREPARANDO EL PATIO</span></span><span id="round-label">PARTIDA RÁPIDA</span></div>
-            <div class="arena" id="arena-shell">
-              <canvas id="game-canvas" width="960" height="420" role="img" aria-label="Arena de combate de Puente Grande"></canvas>
+            <div class="arena" id="arena-shell"><div class="arena-viewport" id="arena-viewport" aria-label="Escenario del combate"></div>
+              
               <div class="arena-vignette"></div>
               <div class="hud" id="hud" hidden>
                 <div class="fighter-hud"><span class="hud-name" id="player-name">TOBI</span><div class="health-track" role="meter" aria-label="Salud de tu luchador" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="player-health"></div></div><span class="health-text" id="player-health-text">100 HP</span><div class="energy-track" role="meter" aria-label="Energía de tu luchador" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="player-energy"></div></div></div>
