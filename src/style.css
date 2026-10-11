@@ -3,3 +3,215 @@
 /* Local fonts keep the arcade title and fighter names consistent on every machine. */
 .primary-button>span{display:none}.primary-button::after,.brand-mark>span,.orange-marker{content:"";display:inline-block;width:12px;height:12px;flex:none;border-top:2px solid currentColor;border-right:2px solid currentColor;background:linear-gradient(135deg,transparent 43%,currentColor 44% 55%,transparent 56%)}.brand-mark>span{width:7px;height:7px;border-width:1px}.orange-marker{width:8px;height:8px;border-width:1px}.brand-mark,.brand-name,.caption-title,.fighter-name,.section-heading h2,.arena-message h2,.controls-intro h2,.footer-brand,.hud-name,.timer,.stats-value{font-weight:800}.fighter-description{gap:4px}.fighter-name{min-width:0}.fighter-card:disabled{opacity:.7;cursor:default}
 @media(min-width:361px) and (max-width:520px){.touch-controls button{min-width:44px;height:44px}.action-controls button{width:48px}}
+
+
+/* EPIC MOBILE REFINEMENT · safe-area-aware, compact layout */
+:root {
+  --pg-red: #e34235;
+  --pg-orange: #ff7847;
+  --pg-ink: #090c0b;
+  --pg-panel: #151a18;
+  --pg-line: rgba(232, 239, 218, .13);
+}
+html, body, #app { min-height: 100%; }
+body {
+  background:
+    radial-gradient(ellipse at 72% 8%, rgba(116, 32, 24, .15), transparent 32rem),
+    linear-gradient(180deg, #0a0d0c 0%, #151a17 42%, #0c0f0e 100%);
+}
+.site-header {
+  height: 78px;
+  border-bottom-color: var(--pg-line);
+  padding-inline: clamp(12px, 2vw, 28px);
+}
+main { padding-inline: clamp(12px, 2vw, 28px); }
+.site-header, main, footer { max-width: 1440px; }
+.arcade-section {
+  grid-template-columns: minmax(235px, 300px) minmax(0, 1fr);
+  gap: clamp(18px, 2.2vw, 32px);
+  padding-block: clamp(18px, 3vh, 34px) clamp(24px, 4vh, 42px);
+}
+h1 {
+  font-size: clamp(58px, 5.8vw, 78px);
+  line-height: .86;
+  letter-spacing: -1.4px;
+  margin: 17px 0 12px;
+  text-shadow: 0 6px 32px rgba(0, 0, 0, .38);
+}
+.intro-copy { margin-bottom: 17px; font-size: 13px; }
+.match-config .primary-button {
+  background: linear-gradient(105deg, #ff8657, #ef4b3e 72%, #c92e2a);
+  color: #100e0b;
+  box-shadow: 0 8px 28px rgba(219, 59, 45, .2);
+}
+.primary-button { min-height: 46px; border-radius: 4px; }
+.arcade-machine {
+  border-radius: 8px;
+  border-color: rgba(255, 111, 76, .28);
+  box-shadow: 0 20px 55px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.015) inset;
+}
+.arena-topline, .arena-bottomline {
+  padding: 10px 14px;
+  letter-spacing: 1px;
+}
+.arena { aspect-ratio: 960 / 420; isolation: isolate; }
+.arena-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background: #10160f;
+}
+.arena-vignette { z-index: 1; }
+.arena-caption { z-index: 2; }
+.hud { z-index: 3; }
+.pause-button { z-index: 4; }
+.arena-message { z-index: 6; }
+.loading-message { z-index: 7; }
+#game-canvas { display: none !important; }
+.selection-section, .stage-section { padding-bottom: 28px; }
+.section-heading { margin-bottom: 14px; }
+.fighter-card, .stage-card {
+  border-radius: 5px;
+  border-color: rgba(232,239,218,.1);
+  background-color: #171c19;
+}
+.fighter-portrait { height: clamp(94px, 10vw, 132px); }
+.fighter-portrait-image {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
+}
+.fighter-description { padding: 9px 10px; }
+.fighter-name { font-size: clamp(15px, 1.5vw, 20px); }
+.fighter-card[aria-pressed="true"] {
+  border-color: var(--pg-orange);
+  box-shadow: 0 0 0 1px rgba(255,120,71,.13), 0 8px 25px rgba(224,66,53,.08);
+}
+.stage-card { border-radius: 5px; }
+.controls-section { padding-block: 27px 34px; gap: clamp(20px, 4vw, 48px); }
+.touch-controls {
+  position: relative;
+  z-index: 5;
+  padding: 10px max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  gap: clamp(8px, 3vw, 24px);
+  background: linear-gradient(180deg, rgba(20,25,22,.98), rgba(8,10,9,.99));
+  border-top-color: rgba(255,120,71,.23);
+}
+.direction-controls { gap: 6px; }
+.touch-controls button {
+  min-width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border-color: rgba(209,222,197,.24);
+  background: linear-gradient(150deg, #343d34, #1a201b);
+  box-shadow: 0 3px 0 rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.02) inset;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.touch-controls button.pressed {
+  transform: translateY(2px) scale(.97);
+  background: linear-gradient(150deg, #b34231, #6f211d);
+  border-color: #ff9675;
+}
+.action-controls { gap: clamp(5px, 1vw, 9px); }
+.action-controls button {
+  width: clamp(46px, 6vw, 58px);
+  min-width: 46px;
+  height: clamp(46px, 6vw, 58px);
+  font-weight: 800;
+}
+.action-controls button span { font-size: 7px; letter-spacing: .4px; }
+.action-controls button:nth-child(1) { border-color: #7d8373; }
+.action-controls button:nth-child(2) { border-color: #9a6a42; }
+.action-controls .special-control {
+  color: #fff2e7;
+  background: linear-gradient(150deg, #f75d43, #9c2524);
+  border-color: #ff9b78;
+  box-shadow: 0 0 20px rgba(233,62,48,.18);
+}
+footer { padding: 18px clamp(12px, 2vw, 28px) max(18px, env(safe-area-inset-bottom)); }
+@media (max-width: 850px) {
+  .site-header { height: 66px; }
+  .arcade-section {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    padding-block: 18px 26px;
+  }
+  .intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, .72fr);
+    gap: 0 18px;
+    align-items: center;
+  }
+  .intro > .eyebrow { grid-column: 1 / -1; }
+  h1 { font-size: clamp(48px, 10vw, 66px); margin: 12px 0 8px; }
+  .intro-copy { grid-column: 1; margin: 0; font-size: 11px; }
+  .match-config { grid-column: 2; grid-row: 2 / 4; }
+  .session-stats { display: none; }
+  .arena-caption { left: 15px; bottom: 13px; }
+  .caption-title { font-size: clamp(22px, 4vw, 30px); }
+}
+@media (max-width: 560px) {
+  .site-header { padding-inline: 0; }
+  main { padding-inline: 0; }
+  .site-header, main, footer { margin-left: max(12px, env(safe-area-inset-left)); margin-right: max(12px, env(safe-area-inset-right)); }
+  nav { gap: 12px; }
+  .brand-mark { width: 42px; height: 38px; font-size: 21px; }
+  .brand-name { font-size: 13px; }
+  .sound-button { min-width: 34px; min-height: 34px; justify-content: center; }
+  .intro { display: block; }
+  h1 { font-size: clamp(60px, 17vw, 76px); margin: 14px 0 9px; }
+  .intro-copy { font-size: 12px; margin-bottom: 14px; }
+  .match-config { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 8px; align-items: end; }
+  .match-config label { grid-column: 1 / -1; margin: 0; }
+  .select-wrapper { margin: 0; }
+  .select-wrapper select { min-height: 44px; padding: 10px 30px 10px 10px; font-size: 11px; }
+  .select-wrapper > span { top: 11px; right: 10px; }
+  #play-button { min-height: 44px; padding: 10px 11px; font-size: 10px; justify-content: center; }
+  .game-specs { grid-column: 1 / -1; margin: 2px 0 0; font-size: 6px; }
+  .arcade-section { padding-top: 16px; gap: 16px; }
+  .arena-topline, .arena-bottomline { padding: 9px 10px; font-size: 6px; }
+  .arena-message { padding: 9px; }
+  .arena-message h2 { font-size: clamp(24px, 7vw, 32px); }
+  .fighters-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .fighter-portrait { height: clamp(86px, 26vw, 118px); }
+  .fighter-description { padding: 8px; }
+  .fighter-name { font-size: clamp(14px, 4vw, 18px); }
+  .stages-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+  .stage-card { aspect-ratio: 1.75; }
+  .controls-section { grid-template-columns: 1fr; gap: 12px; padding-block: 22px; }
+  .touch-controls { padding: 9px max(9px, env(safe-area-inset-right)) max(9px, env(safe-area-inset-bottom)) max(9px, env(safe-area-inset-left)); gap: 8px; }
+  .direction-controls { gap: 4px; }
+  .direction-controls > div { gap: 4px; }
+  .touch-controls button { min-width: clamp(39px, 11vw, 46px); height: clamp(39px, 11vw, 46px); }
+  .action-controls { gap: 4px; }
+  .action-controls button { width: clamp(40px, 12vw, 48px); min-width: 40px; height: clamp(44px, 12vw, 50px); font-size: 13px; }
+  .action-controls button span { font-size: 6px; }
+  .keyboard-note, .section-hint { display: none; }
+  footer { gap: 8px; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .site-header { height: 50px; }
+  .arcade-section { padding-block: 10px 15px; grid-template-columns: minmax(150px, .34fr) minmax(0, 1fr); gap: 12px; }
+  h1 { font-size: clamp(34px, 7vh, 48px); margin: 6px 0; }
+  .intro-copy { font-size: 9px; margin: 0 0 8px; }
+  .match-config label, .game-specs, .session-stats { display: none; }
+  .match-config { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+  .select-wrapper select { padding-block: 7px; }
+  #play-button { min-height: 38px; padding: 7px; font-size: 9px; }
+  .arena { aspect-ratio: 2.45; }
+  .touch-controls { padding-block: 6px; }
+  .touch-controls button { min-width: 38px; height: 38px; }
+  .action-controls button { min-width: 42px; width: 42px; height: 42px; }
+  .selection-section, .stage-section, .controls-section { padding-block: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+}
