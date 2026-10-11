@@ -147,15 +147,15 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     });
   }
 
-  function draw({ stage, catalog, match, elapsed, particles = [] }) {
+  function draw({ stage, catalog, match, selectedFighter = 'tobi', elapsed, particles = [] }) {
     if (destroyed) return;
     const stageInfo = catalog.backgrounds.find(item => item.id === stage);
     if (stageInfo) setBackground(stageInfo.path);
     if (!match) {
-      const left = catalog.fighters.find(f => f.id === 'tobi') || catalog.fighters[0];
-      const right = catalog.fighters.find(f => f.id !== left.id && f.id === 'mateo') || catalog.fighters.find(f => f.id !== left.id);
-      renderFighter({ id: left.id, x: 580, y: 0, facing: 1, action: 'idle' }, left, elapsed, 'preview-player');
-      renderFighter({ id: right.id, x: 785, y: 0, facing: -1, action: 'idle' }, right, elapsed + 0.3, 'preview-opponent');
+      const left = catalog.fighters.find(f => f.id === selectedFighter) || catalog.fighters[0];
+      const right = catalog.fighters.find(f => f.id === 'mateo' && f.id !== left.id) || catalog.fighters.find(f => f.id !== left.id);
+      renderFighter({ id: left.id, x: 280, y: 0, facing: 1, action: 'idle' }, left, elapsed, 'preview-player');
+      renderFighter({ id: right.id, x: 680, y: 0, facing: -1, action: 'idle' }, right, elapsed + 0.3, 'preview-opponent');
     } else {
       const player = catalog.fighters.find(f => f.id === match.fighters.player.id);
       const opponent = catalog.fighters.find(f => f.id === match.fighters.opponent.id);
