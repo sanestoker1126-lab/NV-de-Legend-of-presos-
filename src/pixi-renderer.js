@@ -109,14 +109,20 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
   }
 
   function updateParticles(particles = []) {
-    fxLayer.removeChildren();
-    for (const particle of particles) {
-      const dot = new Graphics().rect(particle.x, particle.y, 4, 4).fill({
+    // Reuse at most 32 FX graphics to avoid allocation churn on every frame.
+    const visible = particles.slice(0, 32);
+    while (fxLayer.children.length < visible.length) fxLayer.addChild(new Graphics());
+    while (fxLayer.children.length > visible.length) {
+      const item = fxLayer.removeChildAt(fxLayer.children.length - 1);
+      item.clear();
+    }
+    visible.forEach((particle, index) => {
+      const dot = fxLayer.children[index];
+      dot.clear().rect(particle.x, particle.y, 4, 4).fill({
         color: particle.color === '#b9dfe6' ? 0xb9dfe6 : 0xffd483,
         alpha: Math.max(0, particle.life / 0.28),
       });
-      fxLayer.addChild(dot);
-    }
+    });
   }
 
   async function draw({ stage, catalog, match, elapsed, particles = [] }) {
