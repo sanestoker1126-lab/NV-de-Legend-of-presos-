@@ -38,7 +38,6 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
   const frameTextureCache = new Map();
   const spriteCache = new Map();
   const shadowCache = new Map();
-  const feedbackCache = new Map();
   let background = null;
   let shade = null;
   let destroyed = false;
@@ -123,28 +122,6 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     sprite.visible = true;
     sprite.tint = fighter.action === 'special' && !reducedMotion ? 0xffd8b2 : 0xffffff;
 
-    // Preserve the legacy renderer's readable guard and special-move cues.
-    let feedback = feedbackCache.get(key);
-    if (!feedback) {
-      feedback = new Graphics();
-      feedbackCache.set(key, feedback);
-      fighterLayer.addChild(feedback);
-    }
-    feedback.clear();
-    feedback.visible = false;
-    if (fighter.action === 'block') {
-      feedback.arc(0, -95, 57, -1.4, 1.4).stroke({ color: 0xacd9ea, alpha: 0.6, width: 3 });
-      feedback.visible = true;
-    } else if (fighter.action === 'special' && !reducedMotion) {
-      const radius = 48 + Math.sin(time * 16) * 8;
-      feedback.arc(36, -90, radius, -1.3, 1.3).stroke({ color: 0xff7847, alpha: 0.4, width: 7 });
-      feedback.visible = true;
-    }
-    feedback.x = fighter.x;
-    feedback.y = sprite.y;
-    feedback.scale.set(scale * fighter.facing, scale);
-    feedback.zIndex = Math.round(fighter.x) + 0.05;
-
     let shadow = shadowCache.get(key);
     if (!shadow) {
       shadow = new Graphics().ellipse(0, 0, 47, 9).fill({ color: 0x050907, alpha: 0.44 });
@@ -175,7 +152,6 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     if (destroyed) return;
     for (const sprite of spriteCache.values()) sprite.visible = false;
     for (const shadow of shadowCache.values()) shadow.visible = false;
-    for (const feedback of feedbackCache.values()) feedback.visible = false;
     const stageInfo = catalog.backgrounds.find(item => item.id === stage);
     if (stageInfo) setBackground(stageInfo.path);
     if (!match) {
@@ -219,7 +195,6 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
       textureCache.clear();
       spriteCache.clear();
       shadowCache.clear();
-      feedbackCache.clear();
     },
   };
 }
