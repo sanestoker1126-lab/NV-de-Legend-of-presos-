@@ -46,3 +46,10 @@ A candidate atlas is accepted only when:
 - Pixel-based browser tests read back the WebGL canvas through a separate 2D canvas; they must not request a 2D context from the Pixi canvas itself.
 - All combat atlases and stage textures are preloaded once; stage changes reuse the loaded texture and do not create duplicate background sprites.
 - The Pixi draw loop is synchronous after preload, and frame textures are cached by atlas URL, row and column.
+
+
+## Combat feedback parity
+
+- The PixiJS renderer reuses a per-fighter `Graphics` object for guard and special-move arcs, preserving the visual cues from the former 2D canvas renderer.
+- Guard arcs use the legacy cool-blue shield cue; special moves use a pulsing orange arc unless reduced motion is enabled.
+- These effects are presentation-only and do not alter combat simulation, damage, hitboxes, or timers.
