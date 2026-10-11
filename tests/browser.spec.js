@@ -30,6 +30,7 @@ async function canvasFrame(page) {
 }
 
 async function beginMatch(page) {
+  await page.locator('#game-mode').selectOption('quick');
   await page.locator('#difficulty').selectOption('easy');
   await page.locator('#play-button').click();
   if (await page.locator('#message-title').textContent() === 'EL RECUENTO NO CUADRA') await page.locator('#continue-button').click();
@@ -108,6 +109,20 @@ test('all six fighters and five stages load and change the arena preview', async
   expect(stageFrames.size, 'Stage selections must change the actual arena artwork').toBe(5);
 });
 
+
+
+test('escape campaign tells its prologue and opens the first chapter', async ({ page }) => {
+  await page.locator('#game-mode').selectOption('story');
+  await page.locator('#play-button').click();
+  await expect(page.locator('#message-title')).toHaveText('EL RECUENTO NO CUADRA');
+  await expect(page.locator('#message-copy')).toContainText('Sobrevive a tres combates');
+  await page.locator('#continue-button').click();
+  await expect(page.locator('#message-title')).toHaveText('3');
+  await page.locator('#continue-button').click();
+  await expect(page.locator('#arena-message')).toBeHidden();
+  await expect(page.locator('#round-label')).toContainText('CAPÍTULO 1/3');
+  await expect(page.locator('#timer')).toHaveText('50');
+});
 
 test('tournament mode opens with a 50-second first bout and the three-beat intro', async ({ page }) => {
   await page.locator('#game-mode').selectOption('tournament');
