@@ -36,8 +36,8 @@ function fighter(id, side, wins = 0) {
 /** Create an immediately playable best-of-three match; pass ai:false for tests/local control. */
 export function createMatch({ playerId = 'king', opponentId = 'general', difficulty = 'normal', duration = 50, ai = true, random = Math.random } = {}) {
   return {
-    status: 'playing', round: 1, timeLeft: Number.isFinite(duration) && duration > 0 ? duration : 45,
-    duration: Number.isFinite(duration) && duration > 0 ? duration : 45,
+    status: 'playing', round: 1, timeLeft: Number.isFinite(duration) && duration > 0 ? duration : 50,
+    duration: Number.isFinite(duration) && duration > 0 ? duration : 50,
     difficulty: Object.hasOwn(DIFFICULTIES, difficulty) ? difficulty : 'normal',
     ai: Boolean(ai), random: typeof random === 'function' ? random : Math.random,
     paused: false, winner: null, roundWinner: null, events: [],
