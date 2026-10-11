@@ -44,4 +44,5 @@ A candidate atlas is accepted only when:
 
 - The Pixi canvas keeps the `game-canvas` selector for compatibility with existing browser checks.
 - Pixel-based browser tests read back the WebGL canvas through a separate 2D canvas; they must not request a 2D context from the Pixi canvas itself.
-- Background loading is deduplicated per requested stage so repeated animation frames do not create duplicate background sprites.
+- All combat atlases and stage textures are preloaded once; stage changes reuse the loaded texture and do not create duplicate background sprites.
+- The Pixi draw loop is synchronous after preload, and frame textures are cached by atlas URL, row and column.
