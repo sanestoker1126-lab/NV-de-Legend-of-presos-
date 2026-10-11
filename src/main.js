@@ -57,12 +57,16 @@ function buildSelection() {
     const portrait = document.createElement('div'); portrait.className = 'fighter-portrait';
     const number = document.createElement('span'); number.className = 'fighter-index'; number.textContent = `${String(index + 1).padStart(2, '0')} / PG`;
     const badge = document.createElement('span'); badge.className = 'fighter-badge'; badge.textContent = '✓'; badge.hidden = fighter.id !== selectedFighter;
-    const portraitImage = document.createElement('img'); portraitImage.className = 'fighter-portrait-image'; portraitImage.src = assetUrl(fighter.path); portraitImage.alt = ''; portraitImage.loading = 'lazy';
-    portrait.append(number, portraitImage, badge);
+    const imageCanvas = document.createElement('canvas'); imageCanvas.width = 240; imageCanvas.height = 180; imageCanvas.setAttribute('aria-hidden', 'true');
+    portrait.append(number, imageCanvas, badge);
     const description = document.createElement('div'); description.className = 'fighter-description';
     const name = document.createElement('span'); name.className = 'fighter-name'; name.textContent = fighter.name.toUpperCase();
     const hint = document.createElement('span'); hint.textContent = fighter.id === selectedFighter ? 'ELEGIDO' : '+';
     description.append(name, hint); button.append(portrait, description);
+    const bounds = fighter.portrait.alphaBounds;
+    const scale = Math.min(150 / bounds.height, 160 / bounds.width);
+    const ctx = imageCanvas.getContext('2d');
+    ctx.drawImage(textures.get(fighter.path), bounds.x, bounds.y, bounds.width, bounds.height, 120 - bounds.width * scale / 2, 178 - bounds.height * scale, bounds.width * scale, bounds.height * scale);
     button.addEventListener('click', () => { if (!match) selectFighter(fighter.id); });
     $('fighters-grid').append(button);
   }
