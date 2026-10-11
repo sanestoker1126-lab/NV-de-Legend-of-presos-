@@ -1,6 +1,8 @@
 import { Application, Assets, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import { ARENA } from './engine.js';
 
+const hiddenPalette = { tobi: 0xff7847, mateo: 0xb9dfe6, nadia: 0xf3a8ff, semillas: 0xd8e77a, oscuro: 0x9a9fff, callejero: 0xffd483 };
+
 /**
  * Renderer adapter for the existing combat engine. Combat simulation stays in
  * engine.js and coordinates stay in the original 960x420 arena space.
@@ -124,7 +126,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     sprite.zIndex = Math.round(fighter.x);
     sprite.visible = true;
     sprite.alpha = options.alpha ?? 1;
-    sprite.tint = options.audience ? 0x9aa18b : fighter.action === 'special' && !reducedMotion ? 0xffd8b2 : fighter.action === 'hidden' && !reducedMotion ? 0xff7a4b : 0xffffff;
+    sprite.tint = options.audience ? 0x9aa18b : fighter.action === 'special' && !reducedMotion ? 0xffd8b2 : fighter.action === 'hidden' && !reducedMotion ? (hiddenPalette[fighter.id] || 0xff7847) : 0xffffff;
 
     // Preserve the legacy renderer's readable guard and special-move cues.
     let feedback = options.audience ? null : feedbackCache.get(key);
@@ -145,8 +147,9 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
       feedback.visible = true;
     } else if (fighter.action === 'hidden' && !reducedMotion) {
       const radius = 65 + Math.sin(time * 23) * 10;
-      feedback.circle(18, -94, radius).stroke({ color: 0xffcf72, alpha: 0.7, width: 5 });
-      feedback.arc(18, -94, radius + 12, time * 2, time * 2 + 3.8).stroke({ color: 0xff7847, alpha: 0.85, width: 4 });
+      const hiddenColor = hiddenPalette[fighter.id] || 0xff7847;
+      feedback.circle(18, -94, radius).stroke({ color: hiddenColor, alpha: 0.7, width: 5 });
+      feedback.arc(18, -94, radius + 12, time * 2, time * 2 + 3.8).stroke({ color: hiddenColor, alpha: 0.85, width: 4 });
       feedback.visible = true;
     }
     feedback.x = fighter.x;
@@ -179,7 +182,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
       if (particle) {
         const alpha = Math.max(0, particle.life / (particle.maxLife || 0.55));
         const size = particle.size || 4;
-        const color = particle.color === '#b9dfe6' ? 0xb9dfe6 : particle.color === '#ff7847' ? 0xff7847 : particle.color === '#f3a8ff' ? 0xf3a8ff : 0xffd483;
+        const color = ({ '#b9dfe6': 0xb9dfe6, '#ff7847': 0xff7847, '#f3a8ff': 0xf3a8ff, '#d8e77a': 0xd8e77a, '#9a9fff': 0x9a9fff, '#ffd483': 0xffd483 })[particle.color] || 0xffd483;
         if (particle.shape === 'ring') dot.circle(particle.x, particle.y, size + (1 - alpha) * 12).stroke({ color, alpha: alpha * 0.8, width: 2 });
         else if (particle.shape === 'streak') dot.moveTo(particle.x, particle.y).lineTo(particle.x - (particle.vx || 0) * 0.035, particle.y - (particle.vy || 0) * 0.035).stroke({ color, alpha, width: Math.max(1, size * alpha) });
         else dot.poly([particle.x, particle.y - size, particle.x + size * 0.7, particle.y, particle.x, particle.y + size, particle.x - size * 0.7, particle.y]).fill({ color, alpha });
