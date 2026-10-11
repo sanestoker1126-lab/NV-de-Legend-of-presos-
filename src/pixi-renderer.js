@@ -187,7 +187,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     });
   }
 
-  function draw({ stage, catalog, match, selectedFighter = 'tobi', elapsed, particles = [] }) {
+  function draw({ stage, catalog, match, selectedFighter = 'tobi', elapsed, particles = [], selectionPulse = 0, introStep = -1 }) {
     if (destroyed) return;
     for (const sprite of spriteCache.values()) sprite.visible = false;
     for (const shadow of shadowCache.values()) shadow.visible = false;
