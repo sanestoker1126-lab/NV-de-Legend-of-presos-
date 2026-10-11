@@ -18,6 +18,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     autoStart: false,
   });
 
+  app.canvas.id = 'game-canvas';
   app.canvas.setAttribute('aria-label', 'Arena de combate de Puente Grande');
   app.canvas.setAttribute('role', 'img');
   Object.assign(app.canvas.style, { width: '100%', height: '100%', display: 'block' });
@@ -35,6 +36,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
   const shadowCache = new Map();
   let background = null;
   let shade = null;
+  let backgroundRequest = null;
   let destroyed = false;
   let drawToken = 0;
 
@@ -55,17 +57,27 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
 
   async function setBackground(path) {
     if (background?.label === path) return;
-    const texture = await textureFor(path);
-    if (destroyed) return;
-    if (background) backgroundLayer.removeChild(background);
-    background = new Sprite(texture);
-    background.label = path;
-    background.width = ARENA.width;
-    background.height = ARENA.height;
-    backgroundLayer.addChild(background);
-    if (shade) backgroundLayer.removeChild(shade);
-    shade = new Graphics().rect(0, 0, ARENA.width, ARENA.height).fill({ color: 0x07100b, alpha: 0.13 });
-    backgroundLayer.addChild(shade);
+    if (backgroundRequest?.path === path) return backgroundRequest.promise;
+
+    const promise = (async () => {
+      const texture = await textureFor(path);
+      if (destroyed || backgroundRequest?.path !== path || backgroundRequest?.promise !== promise) return;
+      if (background) backgroundLayer.removeChild(background);
+      background = new Sprite(texture);
+      background.label = path;
+      background.width = ARENA.width;
+      background.height = ARENA.height;
+      backgroundLayer.addChild(background);
+      if (shade) backgroundLayer.removeChild(shade);
+      shade = new Graphics().rect(0, 0, ARENA.width, ARENA.height).fill({ color: 0x07100b, alpha: 0.13 });
+      backgroundLayer.addChild(shade);
+    })();
+    backgroundRequest = { path, promise };
+    try {
+      await promise;
+    } finally {
+      if (backgroundRequest?.promise === promise) backgroundRequest = null;
+    }
   }
 
   async function renderFighter(fighter, info, time, slot, token) {
