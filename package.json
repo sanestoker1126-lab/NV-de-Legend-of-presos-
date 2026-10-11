@@ -1,7 +1,7 @@
 {
   "name": "puente-grande",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",
-    "@fontsource/dm-sans": "^5.3.0"
+    "@fontsource/dm-sans": "^5.3.0",
+    "pixi.js": "^8.14.3"
   }
 }
