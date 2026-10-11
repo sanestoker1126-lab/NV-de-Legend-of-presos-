@@ -151,7 +151,12 @@ test('accessible controls release movement after focus changes and accept assist
     const ctx = background.getContext('2d');
     ctx.drawImage(image, 0, 0, background.width, background.height);
     ctx.fillStyle = '#0c140f24'; ctx.fillRect(0, 0, background.width, background.height);
-    // PixiJS renders to WebGL; copy its visible output to a 2D readback canvas for pixel assertions.\n    const rendered = document.createElement('canvas');\n    rendered.width = canvas.width; rendered.height = canvas.height;\n    const renderedContext = rendered.getContext('2d');\n    renderedContext.drawImage(canvas, 0, 0);\n    const scene = renderedContext.getImageData(0, 0, canvas.width, canvas.height).data;
+    // PixiJS renders to WebGL; copy its visible output to a 2D readback canvas for pixel assertions.
+    const rendered = document.createElement('canvas');
+    rendered.width = canvas.width; rendered.height = canvas.height;
+    const renderedContext = rendered.getContext('2d');
+    renderedContext.drawImage(canvas, 0, 0);
+    const scene = renderedContext.getImageData(0, 0, canvas.width, canvas.height).data;
     const reference = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     let minX = 420; let maxX = 0;
     // The other fighter and floor shadow lie outside this initial player region.
