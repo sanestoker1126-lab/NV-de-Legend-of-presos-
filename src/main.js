@@ -238,7 +238,7 @@ function render(dt) {
   if (!catalog) return;
   if (!match?.paused) { for (const particle of particles) { particle.life -= dt; particle.x += particle.vx * dt; particle.y += particle.vy * dt; } }
   particles = particles.filter(particle => particle.life > 0);
-  pixiRenderer?.draw({ stage: selectedStage, catalog, match, elapsed, particles });
+  pixiRenderer?.draw({ stage: selectedStage, catalog, match, selectedFighter, elapsed, particles });
 }
 function frame(now) {
   const dt = Math.min((now - lastFrame) / 1000, 0.05); lastFrame = now;
