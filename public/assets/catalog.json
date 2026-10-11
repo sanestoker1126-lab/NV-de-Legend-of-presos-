@@ -122,6 +122,13 @@
           "startColumn": 0,
           "frames": 9,
           "inferred": true
+        },
+        "victory": {
+          "row": 8,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": false,
+          "source": "TOBI_ATLAS_FINAL_81F_9x9_RGBA_120px.png"
         }
       }
     },
