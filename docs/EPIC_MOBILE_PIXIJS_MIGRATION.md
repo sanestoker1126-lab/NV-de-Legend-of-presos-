@@ -38,3 +38,10 @@ A candidate atlas is accepted only when:
 - Play, character selection, stage selection, start, pause/resume, round transition, rematch, keyboard controls and touch controls all work.
 - Tested at narrow portrait (360px), standard portrait (390px), landscape mobile, and desktop. No blocking overlay or clipped control.
 - PR includes screenshots/notes and clearly distinguishes implemented, tested, and pending items.
+
+
+## WebGL regression checks
+
+- The Pixi canvas keeps the `game-canvas` selector for compatibility with existing browser checks.
+- Pixel-based browser tests read back the WebGL canvas through a separate 2D canvas; they must not request a 2D context from the Pixi canvas itself.
+- Background loading is deduplicated per requested stage so repeated animation frames do not create duplicate background sprites.
