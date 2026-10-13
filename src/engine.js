@@ -15,6 +15,20 @@ export const ATTACKS = Object.freeze({
   hidden: Object.freeze({ damage: 38, range: 320, startup: 0.24, active: 0.20, duration: 1.05, knockback: 78, energy: 80 }),
 });
 
+// Hidden specials have distinct frame windows, reach and impact for each playable fighter.
+export const HIDDEN_SPECIALS = Object.freeze({
+  tobi: Object.freeze({ damage: 34, range: 350, startup: 0.16, active: 0.16, duration: 0.90, knockback: 64, energy: 80 }),
+  mateo: Object.freeze({ damage: 42, range: 300, startup: 0.28, active: 0.24, duration: 1.10, knockback: 86, energy: 80 }),
+  nadia: Object.freeze({ damage: 32, range: 365, startup: 0.20, active: 0.25, duration: 0.95, knockback: 58, energy: 80 }),
+  semillas: Object.freeze({ damage: 36, range: 285, startup: 0.18, active: 0.22, duration: 0.95, knockback: 55, energy: 80 }),
+  oscuro: Object.freeze({ damage: 40, range: 315, startup: 0.30, active: 0.22, duration: 1.10, knockback: 82, energy: 80 }),
+  callejero: Object.freeze({ damage: 37, range: 325, startup: 0.22, active: 0.18, duration: 1.00, knockback: 74, energy: 80 }),
+});
+
+function attackDefinition(fighter, attack) {
+  return attack === 'hidden' ? (HIDDEN_SPECIALS[fighter.id] || ATTACKS.hidden) : ATTACKS[attack];
+}
+
 const DIFFICULTIES = {
   easy: { reaction: 0.48, aggression: 0.60, block: 0.14, speed: 170 },
   normal: { reaction: 0.29, aggression: 0.82, block: 0.38, speed: 205 },
@@ -96,7 +110,8 @@ function aiInput(match, dt) {
     input.left = false;
     input.right = false;
   } else if (computer.actionTime <= 0 && match.random() < settings.aggression) {
-    if (distance < 250 && computer.energy >= 35 && computer.specialCooldown <= 0 && match.random() < 0.25) input.special = true;
+    if (distance < 320 && computer.energy >= 80 && computer.specialCooldown <= 0 && match.random() < 0.08) input.hidden = true;
+    else if (distance < 250 && computer.energy >= 35 && computer.specialCooldown <= 0 && match.random() < 0.25) input.special = true;
     else if (distance < 138) input[match.random() < 0.45 ? 'punch' : 'kick'] = true;
   }
   if (!input.block && distance > 145 && match.random() < 0.08) input.jump = true;
@@ -142,7 +157,7 @@ function updateFighter(match, side, input, dt) {
       const hiddenReady = pressed('hidden') && current.energy >= ATTACKS.hidden.energy && current.specialCooldown <= 0;
       const attack = hiddenReady ? 'hidden' : ['special', 'kick', 'punch'].find(name => pressed(name) && current.energy >= ATTACKS[name].energy && (name !== 'special' || current.specialCooldown <= 0));
       if (attack) {
-        const definition = ATTACKS[attack];
+        const definition = attackDefinition(current, attack);
         current.action = attack;
         current.actionTime = definition.duration;
         current.energy -= definition.energy;
@@ -173,7 +188,7 @@ function collectHit(match, side) {
   const defender = match.fighters[otherSide(side)];
   const attack = attacker._attack;
   if (!attack || attack.connected) return null;
-  const definition = ATTACKS[attack.name];
+  const definition = attackDefinition(attacker, attack.name);
   if (attack.elapsed < definition.startup || attack.elapsed > definition.startup + definition.active) return null;
   const distance = (defender.x - attacker.x) * attack.direction;
   if (distance < 0 || distance > definition.range || Math.abs(defender.y - attacker.y) > 88) return null;
@@ -183,14 +198,14 @@ function collectHit(match, side) {
 
 function applyHit(match, hit) {
   const { side, attacker, defender, attack, definition, blocked } = hit;
-  const damage = blocked ? (attack.name === 'special' ? 5 : 1) : definition.damage;
+  const damage = blocked ? (attack.name === 'hidden' ? 7 : attack.name === 'special' ? 5 : 1) : definition.damage;
   defender.health = Math.max(0, defender.health - damage);
   defender.x = clamp(defender.x + attack.direction * definition.knockback * (blocked ? 0.25 : 1), ARENA.minX, ARENA.maxX);
   if (!blocked) {
     attacker.hits += 1;
     attacker.energy = Math.min(100, attacker.energy + 3);
     defender.action = 'hit';
-    defender.actionTime = attack.name === 'special' ? 0.32 : 0.21;
+    defender.actionTime = attack.name === 'hidden' ? 0.42 : attack.name === 'special' ? 0.32 : 0.21;
     defender._attack = null;
   }
   match.events.push({ type: 'hit', side, target: otherSide(side), attack: attack.name, damage, blocked, x: defender.x, y: defender.y });

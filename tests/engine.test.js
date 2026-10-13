@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ARENA, ATTACKS, createMatch, setPaused, startNextRound, stepMatch } from '../src/engine.js';
+import { ARENA, ATTACKS, HIDDEN_SPECIALS, createMatch, setPaused, startNextRound, stepMatch } from '../src/engine.js';
 
 const advance = (match, seconds, input = {}) => {
   for (let remaining = seconds; remaining > 1e-8; remaining -= 0.025) stepMatch(match, Math.min(0.025, remaining), input);
@@ -178,6 +178,32 @@ test('hidden special requires 80 energy and deals a distinct burst of damage', (
   assert.equal(match.events[0].type, 'hiddenSpecial');
   advance(match, 0.7, { hidden: true });
   assert.equal(match.fighters.opponent.health, 100 - ATTACKS.hidden.damage);
+});
+
+test('hidden specials use distinct fighter-specific timing, reach, damage and knockback', () => {
+  assert.deepEqual(Object.keys(HIDDEN_SPECIALS).sort(), ['callejero', 'mateo', 'nadia', 'oscuro', 'semillas', 'tobi']);
+  assert.notEqual(HIDDEN_SPECIALS.tobi.damage, HIDDEN_SPECIALS.mateo.damage);
+  assert.notEqual(HIDDEN_SPECIALS.nadia.range, HIDDEN_SPECIALS.semillas.range);
+  for (const [fighterId, definition] of Object.entries(HIDDEN_SPECIALS)) {
+    const match = createMatch({ playerId: fighterId, ai: false });
+    closeFighters(match);
+    match.fighters.player.energy = 100;
+    stepMatch(match, 0.025, { hidden: true });
+    assert.equal(match.fighters.player.energy, 20, `${fighterId} pays 80 energy`);
+    assert.equal(match.fighters.player.action, 'hidden');
+    advance(match, definition.startup + definition.active + 0.08, { hidden: true });
+    assert.equal(match.fighters.opponent.health, 100 - definition.damage, `${fighterId} damage`);
+    assert.equal(match.fighters.opponent.x, 480 + definition.knockback, `${fighterId} knockback`);
+  }
+});
+
+test('a guarded hidden special is reduced instead of dealing full damage', () => {
+  const match = createMatch({ playerId: 'mateo', ai: false });
+  closeFighters(match);
+  match.fighters.player.energy = 100;
+  advance(match, 0.45, { hidden: true, opponent: { block: true } });
+  assert.equal(match.fighters.opponent.health, 93);
+  assert.equal(match.fighters.opponent.action, 'block');
 });
 
 test('simultaneous attacks can trade and produce a double-knockout draw', () => {

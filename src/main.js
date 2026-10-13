@@ -170,6 +170,7 @@ function beginMatch() {
   $('player-name').textContent = fighterById(selectedFighter).name.toUpperCase();
   $('opponent-name').textContent = `${opponent.name.toUpperCase()} · CPU`;
   lockSelection(true); updateHud();
+  canvasHost.dataset.playerX = String(match.fighters.player.x);
   if (tournament) $('round-label').textContent = `TORNEO ${tournament.index + 1}/${tournament.opponents.length} · ROUND 1`;
   const beat = introSequence.beats[0];
   showMessage('CINEMÁTICA DE ENTRADA', beat[0], beat[2], 'SALTAR INTRO', finishIntro);
@@ -338,6 +339,7 @@ function frame(now) {
   if (introSequence) advanceIntro(dt);
   else if (match && !match.paused && match.status === 'playing') {
     stepMatch(match, dt, getInput()); queuedPresses.clear(); handleEvents(); updateHud();
+    canvasHost.dataset.playerX = String(match.fighters.player.x);
     if (match.status !== 'playing' && match.status !== displayedStatus) { displayedStatus = match.status; showResult(); }
   }
   render(dt); requestAnimationFrame(frame);
