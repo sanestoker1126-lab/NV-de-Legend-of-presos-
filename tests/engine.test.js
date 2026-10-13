@@ -187,7 +187,7 @@ test('hidden specials use distinct fighter-specific timing, reach, damage and kn
   for (const [fighterId, definition] of Object.entries(HIDDEN_SPECIALS)) {
     const match = createMatch({ playerId: fighterId, ai: false });
     closeFighters(match);
-    match.fighters.player.energy = 80;
+    match.fighters.player.energy = 100;
     stepMatch(match, 0.025, { hidden: true });
     assert.equal(match.fighters.player.energy, 20, `${fighterId} pays 80 energy`);
     assert.equal(match.fighters.player.action, 'hidden');
