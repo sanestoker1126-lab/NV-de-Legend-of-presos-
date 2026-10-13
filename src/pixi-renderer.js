@@ -202,8 +202,9 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     const right = catalog.fighters.find(f => f.id === rightId) || catalog.fighters[1];
     const occupied = new Set([left.id, right.id]);
     const audienceIds = catalog.fighters.filter(f => !occupied.has(f.id)).slice(0, 4);
-    const crowdPositions = [100, 235, 725, 860];
-    audienceIds.forEach((info, index) => renderFighter({ id: info.id, x: crowdPositions[index], y: 0, facing: index < 2 ? 1 : -1, action: 'idle' }, info, elapsed * 0.72 + index * 0.31, `audience-${index}`, { audience: true, scaleMultiplier: 0.43, verticalOffset: -24, alpha: 0.62 }));
+    // Keep the idle crowd at the far edges so they never cover the active fighters or HUD.
+    const crowdPositions = [5, 45, 915, 955];
+    audienceIds.forEach((info, index) => renderFighter({ id: info.id, x: crowdPositions[index], y: 0, facing: index < 2 ? 1 : -1, action: 'idle' }, info, elapsed * 0.72 + index * 0.31, `audience-${index}`, { audience: true, scaleMultiplier: 0.26, verticalOffset: -24, alpha: 0.62 }));
     if (!match) {
       const phase = Math.max(0, elapsed - selectionPulse);
       const revealAction = phase < 0.55 ? 'idle' : phase < 1.1 ? 'walk' : phase < 1.65 ? 'punch' : 'idle';
