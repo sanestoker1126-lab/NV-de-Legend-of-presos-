@@ -184,6 +184,12 @@ test('hidden specials use distinct fighter-specific timing, reach, damage and kn
   assert.deepEqual(Object.keys(HIDDEN_SPECIALS).sort(), ['callejero', 'mateo', 'nadia', 'oscuro', 'semillas', 'tobi']);
   assert.notEqual(HIDDEN_SPECIALS.tobi.damage, HIDDEN_SPECIALS.mateo.damage);
   assert.notEqual(HIDDEN_SPECIALS.nadia.range, HIDDEN_SPECIALS.semillas.range);
+  assert.ok(ATTACKS.special.duration <= 0.6, 'regular special recovery stays under 0.6 seconds');
+  assert.ok(ATTACKS.hidden.duration <= 0.8, 'generic MAX recovery stays under 0.8 seconds');
+  for (const [fighterId, definition] of Object.entries(HIDDEN_SPECIALS)) {
+    assert.ok(definition.duration <= 0.8, `${fighterId} MAX recovery stays under 0.8 seconds`);
+    assert.ok(definition.startup <= 0.16, `${fighterId} MAX starts quickly`);
+  }
   for (const [fighterId, definition] of Object.entries(HIDDEN_SPECIALS)) {
     const match = createMatch({ playerId: fighterId, ai: false });
     closeFighters(match);
