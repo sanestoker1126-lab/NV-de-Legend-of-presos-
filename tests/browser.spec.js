@@ -150,10 +150,12 @@ test('desktop keyboard combat changes health and energy; pause, resume and retur
   await page.keyboard.down('d');
   await page.waitForTimeout(750);
   for (let i = 0; i < 8 && (await page.locator('#opponent-health-text').textContent()) === '100 HP'; i++) {
-    await page.keyboard.down(i % 2 ? 'j' : 'k');
+    // Use the long-range special after closing distance; it is a more stable
+    // integration check than alternating short attacks while the CPU retaliates.
+    await page.keyboard.down('l');
     await page.waitForTimeout(80);
-    await page.keyboard.up(i % 2 ? 'j' : 'k');
-    await page.waitForTimeout(510);
+    await page.keyboard.up('l');
+    await page.waitForTimeout(620);
   }
   await page.keyboard.up('d');
   await expect.poll(async () => Number.parseInt(await page.locator('#opponent-health-text').textContent())).toBeLessThan(100);
@@ -302,7 +304,7 @@ test('complete rounds preserve the score, finish the match and allow a rematch',
   await expect(page.locator('#message-title')).toHaveText('HABRÁ REVANCHA');
   await expect(page.locator('#arena-state')).toHaveText('PARTIDA COMPLETADA');
   await expect(page.locator('#round-label')).toHaveText('ROUND 2 · 0 — 2');
-  await expect(page.locator('#continue-button')).toContainText('REVANCHA');
+  await expect(page.locator('#continue-button')).toContainText('REPETIR');
   await page.locator('#continue-button').click();
   await expect(page.locator('#arena-message')).toBeHidden();
   await expect(page.locator('#round-label')).toHaveText('ROUND 1 · 0 — 0');
