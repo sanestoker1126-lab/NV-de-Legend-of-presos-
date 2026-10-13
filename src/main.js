@@ -41,15 +41,6 @@ $('wins-count').textContent = String(wins).padStart(2, '0');
 function announce(text) { $('announcement').textContent = text; }
 function fighterById(id) { return catalog.fighters.find(fighter => fighter.id === id); }
 function stageById(id) { return catalog.backgrounds.find(stage => stage.id === id); }
-function loadImage(path) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => { textures.set(path, image); resolve(image); };
-    image.onerror = () => reject(new Error(`No se pudo cargar ${path}`));
-    image.src = assetUrl(path);
-  });
-}
-
 function buildSelection() {
   const ordered = [...catalog.fighters].sort((a, b) => (a.id === 'tobi' ? -1 : b.id === 'tobi' ? 1 : 0));
   for (const [index, fighter] of ordered.entries()) {
@@ -109,6 +100,9 @@ function selectStage(id) {
   const stageIndex = [...document.querySelectorAll('[data-stage]')].findIndex(button => button.dataset.stage === id) + 1;
   document.querySelector('.caption-label').textContent = `ESCENARIO ${String(stageIndex).padStart(2, '0')} / 05`;
   announce(`Escenario: ${stageById(id).name}`);
+  pixiRenderer?.loadStage(stageById(id).path)
+    .then(() => render(0))
+    .catch(error => { announce('No se pudo cargar ese escenario.'); console.error(error); });
 }
 function lockSelection(locked) {
   document.querySelectorAll('[data-fighter],[data-stage]').forEach(button => button.disabled = locked);
@@ -157,7 +151,7 @@ function beginMatch() {
   const opponent = fighterById(opponentId);
   match = createMatch({ playerId: selectedFighter, opponentId: opponent.id, difficulty: $('difficulty').value, duration: 50 });
   setPaused(match, true);
-  introSequence = { step: 0, remaining: 0.68, beats: [
+  introSequence = { step: 0, remaining: 0.25, beats: [
     ['3', 'RECUENTO CERRADO', 'Las puertas se cierran. Nadie sale sin pelear.'],
     ['2', 'OJOS AL PATIO', 'Los que esperan al fondo ya eligieron bando.'],
     ['1', 'PREPARA EL ESCAPE', 'Golpea, conserva energía y busca tu oportunidad.'],
@@ -183,7 +177,7 @@ function advanceIntro(dt) {
   if (introSequence.remaining > 0) return;
   introSequence.step += 1;
   if (introSequence.step >= introSequence.beats.length) { finishIntro(); return; }
-  introSequence.remaining = 0.68;
+  introSequence.remaining = 0.25;
   const beat = introSequence.beats[introSequence.step];
   $('message-eyebrow').textContent = beat[1];
   $('message-title').textContent = beat[0];
@@ -240,8 +234,8 @@ function showResult() {
   } else if (match.status === 'finished') {
     const won = match.winner === 'player';
     const series = tournament || campaign;
+    if (series && won) series.wins += 1;
     if (series && won && series.index < series.opponents.length - 1) {
-      series.wins += 1;
       const nextName = fighterById(series.opponents[series.index + 1]).name;
       const isTournament = Boolean(tournament);
       const eyebrow = isTournament ? 'TORNEO DEL PATIO · CLASIFICACIÓN' : `CAPÍTULO ${series.index + 1} COMPLETADO`;
@@ -256,7 +250,7 @@ function showResult() {
     }
     const title = tournament && won && tournament.index === tournament.opponents.length - 1 ? 'CAMPEÓN DEL PATIO' : campaign && won && campaign.index === campaign.opponents.length - 1 ? 'CRUZASTE EL PORTÓN' : won ? 'EL PATIO ES TUYO' : match.winner === 'draw' ? 'NADIE SE RINDE' : 'HABRÁ REVANCHA';
     const score = `${match.fighters.player.wins} — ${match.fighters.opponent.wins}`;
-    const chapter = tournament ? (won && tournament.index === tournament.opponents.length - 1 ? 'Ganaste el torneo. El último portón queda a tu alcance.' : won ? 'Ganaste este combate, pero el torneo sigue.' : 'El torneo termina aquí. La fuga tendrá que esperar.') : campaign ? (won && campaign.index === campaign.opponents.length - 1 ? 'La ruta queda libre. Al amanecer, el patio ya es parte del pasado.' : 'La fuga se detiene aquí. El penal sigue en alerta y habrá que intentarlo otra vez.') : won ? 'El patio quedó atrás. La ruta de escape sigue abierta.' : 'Cada round deja una lección. El penal no ha terminado de contar tu historia.';
+    const chapter = tournament ? (won && tournament.index === tournament.opponents.length - 1 ? `Ganaste el torneo con ${tournament.wins} victorias. El último portón queda a tu alcance.` : won ? 'Ganaste este combate, pero el torneo sigue.' : 'El torneo termina aquí. La fuga tendrá que esperar.') : campaign ? (won && campaign.index === campaign.opponents.length - 1 ? 'La ruta queda libre. Al amanecer, el patio ya es parte del pasado.' : 'La fuga se detiene aquí. El penal sigue en alerta y habrá que intentarlo otra vez.') : won ? 'El patio quedó atrás. La ruta de escape sigue abierta.' : 'Cada round deja una lección. El penal no ha terminado de contar tu historia.';
     showMessage(tournament ? 'TORNEO DEL PATIO · RESULTADO' : campaign ? 'EXPEDIENTE DE FUGA · FINAL' : 'COMBATE RÁPIDO · RESULTADO', title, `${score} · ${chapter}`, 'REPETIR', () => { tournament = null; campaign = null; startGame(); });
     if (tournament && (!won || tournament.index === tournament.opponents.length - 1)) tournament = null;
     if (campaign && (!won || campaign.index === campaign.opponents.length - 1)) campaign = null;
@@ -396,9 +390,13 @@ async function init() {
     const response = await fetch(assetUrl('assets/catalog.json'));
     if (!response.ok) throw new Error('Catálogo no disponible');
     catalog = await response.json();
-    await Promise.all([...catalog.fighters, ...catalog.backgrounds].map(item => loadImage(item.path)));
     pixiRenderer = await createPixiRenderer(canvasHost, { assetUrl, reducedMotion });
-    await pixiRenderer.preload(catalog);
+    const loadedTextures = await pixiRenderer.preload(catalog, selectedStage);
+    for (const fighter of catalog.fighters) {
+      const image = loadedTextures.get(fighter.path)?.source?.resource;
+      if (!image) throw new Error(`No se pudo preparar el atlas de ${fighter.name}`);
+      textures.set(fighter.path, image);
+    }
     $('loading-message').hidden = true; $('play-button').disabled = false;
     $('arena-state').textContent = 'EL PATIO TE ESPERA'; $('play-button').textContent = 'INICIAR ESCAPE'; $('round-label').textContent = 'CAMPAÑA · 50 SEGUNDOS'; buildSelection(); requestAnimationFrame(frame);
   } catch (error) {
