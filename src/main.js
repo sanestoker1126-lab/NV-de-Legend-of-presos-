@@ -4,7 +4,7 @@ import '@fontsource/dm-sans/latin-500.css';
 import '@fontsource/dm-sans/latin-700.css';
 import './style.css';
 import { createPixiRenderer } from './pixi-renderer.js';
-import { createMatch, stepMatch, startNextRound, setPaused, ARENA } from './engine.js';
+import { createMatch, stepMatch, startNextRound, setPaused, ARENA, getPowerTier } from './engine.js';
 
 const $ = id => document.getElementById(id);
 const canvasHost = $('arena-viewport');
@@ -264,6 +264,7 @@ function updateHud() {
     $(`${side}-health`).style.width = `${fighter.health}%`;
     $(`${side}-health-text`).textContent = `${Math.ceil(fighter.health)} HP`;
     $(`${side}-energy`).style.width = `${fighter.energy}%`;
+    $(`${side}-energy`).dataset.powerTier = getPowerTier(fighter.energy);
     $(`${side}-health`).parentElement.setAttribute('aria-valuenow', String(Math.ceil(fighter.health)));
     $(`${side}-energy`).parentElement.setAttribute('aria-valuenow', String(Math.round(fighter.energy)));
   }
