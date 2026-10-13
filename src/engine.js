@@ -34,6 +34,7 @@ const DIFFICULTIES = {
   normal: { reaction: 0.29, aggression: 0.82, block: 0.38, speed: 205 },
   hard: { reaction: 0.17, aggression: 0.98, block: 0.64, speed: 230 },
 };
+const ENERGY_REGEN_PER_SECOND = 7.5;
 const BUTTONS = ['left', 'right', 'jump', 'block', 'punch', 'kick', 'special', 'hidden'];
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const otherSide = side => side === 'player' ? 'opponent' : 'player';
@@ -110,8 +111,8 @@ function aiInput(match, dt) {
     input.left = false;
     input.right = false;
   } else if (computer.actionTime <= 0 && match.random() < settings.aggression) {
-    if (distance < 320 && computer.energy >= 80 && computer.specialCooldown <= 0 && match.random() < 0.08) input.hidden = true;
-    else if (distance < 250 && computer.energy >= 35 && computer.specialCooldown <= 0 && match.random() < 0.25) input.special = true;
+    if (distance < 320 && computer.energy >= 80 && computer.specialCooldown <= 0 && match.random() < 0.04) input.hidden = true;
+    else if (distance < 250 && computer.energy >= 35 && computer.specialCooldown <= 0 && match.random() < 0.14) input.special = true;
     else if (distance < 138) input[match.random() < 0.45 ? 'punch' : 'kick'] = true;
   }
   if (!input.block && distance > 145 && match.random() < 0.08) input.jump = true;
@@ -125,7 +126,7 @@ function updateFighter(match, side, input, dt) {
   const previousInput = current._previousInput;
   const pressed = button => input[button] && !previousInput[button];
   current._previousInput = input;
-  current.energy = Math.min(100, current.energy + dt * 9);
+  current.energy = Math.min(100, current.energy + dt * ENERGY_REGEN_PER_SECOND);
   current.specialCooldown = Math.max(0, current.specialCooldown - dt);
   current.actionTime = Math.max(0, current.actionTime - dt);
   if (current.actionTime === 0) current._attack = null;
