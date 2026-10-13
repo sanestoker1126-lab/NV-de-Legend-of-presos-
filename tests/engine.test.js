@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ARENA, ATTACKS, HIDDEN_SPECIALS, createMatch, setPaused, startNextRound, stepMatch } from '../src/engine.js';
+import { ARENA, ATTACKS, HIDDEN_SPECIALS, POWER_LEVELS, createMatch, getPowerTier, setPaused, startNextRound, stepMatch } from '../src/engine.js';
 
 const advance = (match, seconds, input = {}) => {
   for (let remaining = seconds; remaining > 1e-8; remaining -= 0.025) stepMatch(match, Math.min(0.025, remaining), input);
@@ -10,6 +10,16 @@ const closeFighters = match => {
   match.fighters.player.x = 400;
   match.fighters.opponent.x = 480;
 };
+
+test('power meter has clear special and MAX thresholds', () => {
+  assert.deepEqual(POWER_LEVELS, { special: 35, max: 80 });
+  assert.equal(getPowerTier(0), 'building');
+  assert.equal(getPowerTier(34.9), 'building');
+  assert.equal(getPowerTier(35), 'special');
+  assert.equal(getPowerTier(79.9), 'special');
+  assert.equal(getPowerTier(80), 'max');
+  assert.equal(getPowerTier(100), 'max');
+});
 
 test('a punch connects once with startup, range, damage and knockback', () => {
   const match = createMatch({ ai: false });
@@ -52,13 +62,14 @@ test('specials consume energy, respect their cooldown and regenerate energy', ()
   const match = createMatch({ ai: false });
   stepMatch(match, 0.025, { special: true });
   assert.equal(match.fighters.player.energy, 65);
-  assert.equal(match.fighters.player.specialCooldown, 1.3);
+  assert.equal(match.fighters.player.specialCooldown, 1.5);
   advance(match, 0.75);
   const energy = match.fighters.player.energy;
   stepMatch(match, 0.025, { special: true });
   assert.equal(match.fighters.player.action, 'idle', 'special is still cooling down');
   assert.ok(match.fighters.player.energy > energy);
-  advance(match, 0.6);
+  assert.ok(match.fighters.player.energy <= 71, 'passive regeneration is limited to 6.5 energy per second');
+  advance(match, 0.8);
   stepMatch(match, 0.025, { special: true });
   assert.equal(match.fighters.player.action, 'special');
   match.fighters.player.energy = 0;

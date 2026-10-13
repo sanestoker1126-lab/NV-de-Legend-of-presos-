@@ -8,6 +8,13 @@
  */
 export const ARENA = Object.freeze({ width: 960, height: 420, groundY: 350, minX: 36, maxX: 924 });
 
+export const POWER_LEVELS = Object.freeze({ special: 35, max: 80 });
+export function getPowerTier(energy) {
+  if (energy >= POWER_LEVELS.max) return 'max';
+  if (energy >= POWER_LEVELS.special) return 'special';
+  return 'building';
+}
+
 export const ATTACKS = Object.freeze({
   punch: Object.freeze({ damage: 9, range: 108, startup: 0.07, active: 0.10, duration: 0.34, knockback: 22, energy: 0 }),
   kick: Object.freeze({ damage: 14, range: 146, startup: 0.13, active: 0.12, duration: 0.49, knockback: 38, energy: 0 }),
@@ -34,7 +41,7 @@ const DIFFICULTIES = {
   normal: { reaction: 0.29, aggression: 0.82, block: 0.38, speed: 205 },
   hard: { reaction: 0.17, aggression: 0.98, block: 0.64, speed: 230 },
 };
-const ENERGY_REGEN_PER_SECOND = 7.5;
+const ENERGY_REGEN_PER_SECOND = 6.5;
 const BUTTONS = ['left', 'right', 'jump', 'block', 'punch', 'kick', 'special', 'hidden'];
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const otherSide = side => side === 'player' ? 'opponent' : 'player';
@@ -163,8 +170,8 @@ function updateFighter(match, side, input, dt) {
         current.actionTime = definition.duration;
         current.energy -= definition.energy;
         current._attack = { name: attack, elapsed: 0, connected: false, direction: current.facing };
-        if (attack === 'special') current.specialCooldown = 1.3;
-        if (attack === 'hidden') current.specialCooldown = 2.8;
+        if (attack === 'special') current.specialCooldown = 1.5;
+        if (attack === 'hidden') current.specialCooldown = 3.2;
         match.events.push({ type: attack === 'hidden' ? 'hiddenSpecial' : attack, side });
       }
     }
@@ -204,7 +211,7 @@ function applyHit(match, hit) {
   defender.x = clamp(defender.x + attack.direction * definition.knockback * (blocked ? 0.25 : 1), ARENA.minX, ARENA.maxX);
   if (!blocked) {
     attacker.hits += 1;
-    attacker.energy = Math.min(100, attacker.energy + 3);
+    attacker.energy = Math.min(100, attacker.energy + 4);
     defender.action = 'hit';
     defender.actionTime = attack.name === 'hidden' ? 0.30 : attack.name === 'special' ? 0.24 : 0.21;
     defender._attack = null;
