@@ -65,6 +65,7 @@ test('specials consume energy, respect their cooldown and regenerate energy', ()
   advance(match, 1.4);
   stepMatch(match, 0.025, { special: true });
   assert.notEqual(match.fighters.player.action, 'special', 'insufficient energy prevents a special');
+  assert.ok(match.fighters.player.energy < 100, 'slower regeneration preserves energy management over the first few seconds');
   advance(match, 20);
   assert.equal(match.fighters.player.energy, 100, 'energy stops at its maximum');
 });
