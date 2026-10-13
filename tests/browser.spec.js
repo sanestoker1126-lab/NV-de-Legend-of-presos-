@@ -148,7 +148,7 @@ test('desktop keyboard combat changes health and energy; pause, resume and retur
   await expect(page.locator('#opponent-health-text')).toHaveText('100 HP'); // Out-of-range attacks miss.
 
   await page.keyboard.down('d');
-  await page.waitForTimeout(750);
+  await page.waitForTimeout(400);
   for (let i = 0; i < 8 && (await page.locator('#opponent-health-text').textContent()) === '100 HP'; i++) {
     // Use the long-range special after closing distance; it is a more stable
     // integration check than alternating short attacks while the CPU retaliates.
@@ -177,31 +177,7 @@ test('desktop keyboard combat changes health and energy; pause, resume and retur
 test('accessible controls release movement after focus changes and accept assistive activation', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Desktop keyboard focus regression');
   await beginMatch(page);
-  const playerCenter = () => page.locator('#game-canvas').evaluate(async canvas => {
-    const image = new Image();
-    image.src = document.querySelector('[data-stage="patio"] img').src;
-    await image.decode();
-    const background = document.createElement('canvas');
-    background.width = canvas.width; background.height = canvas.height;
-    const ctx = background.getContext('2d');
-    ctx.drawImage(image, 0, 0, background.width, background.height);
-    ctx.fillStyle = '#0c140f24'; ctx.fillRect(0, 0, background.width, background.height);
-    // PixiJS renders to WebGL; copy its visible output to a 2D readback canvas for pixel assertions.
-    const rendered = document.createElement('canvas');
-    rendered.width = canvas.width; rendered.height = canvas.height;
-    const renderedContext = rendered.getContext('2d');
-    renderedContext.drawImage(canvas, 0, 0);
-    const scene = renderedContext.getImageData(0, 0, canvas.width, canvas.height).data;
-    const reference = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    let minX = 420; let maxX = 0;
-    // The other fighter and floor shadow lie outside this initial player region.
-    for (let y = 20; y < 340; y++) for (let x = 80; x < 420; x++) {
-      const offset = (y * canvas.width + x) * 4;
-      const difference = Math.abs(scene[offset] - reference[offset]) + Math.abs(scene[offset + 1] - reference[offset + 1]) + Math.abs(scene[offset + 2] - reference[offset + 2]);
-      if (difference > 90) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); }
-    }
-    return (minX + maxX) / 2;
-  });
+  const playerCenter = async () => Number(await page.locator('#arena-viewport').getAttribute('data-player-x'));
   const right = page.getByRole('button', { name: 'Mover a la derecha', exact: true });
   const initialPosition = await playerCenter();
   await right.focus();
@@ -305,6 +281,9 @@ test('complete rounds preserve the score, finish the match and allow a rematch',
   await expect(page.locator('#arena-state')).toHaveText('PARTIDA COMPLETADA');
   await expect(page.locator('#round-label')).toHaveText('ROUND 2 · 0 — 2');
   await expect(page.locator('#continue-button')).toContainText('REPETIR');
+  await page.locator('#continue-button').click();
+  await expect(page.locator('#arena-message')).toBeVisible();
+  await expect(page.locator('#message-title')).toHaveText('3');
   await page.locator('#continue-button').click();
   await expect(page.locator('#arena-message')).toBeHidden();
   await expect(page.locator('#round-label')).toHaveText('ROUND 1 · 0 — 0');
