@@ -56,6 +56,7 @@ A candidate atlas is accepted only when:
 - Rounds use a 50-second clock. The engine adds a high-cost hidden special at 80 energy, exposed through `I` on keyboard and the `MAX` touch control.
 - The renderer places small idle catalog fighters in the background and reuses a fixed particle pool for sparks, streaks and rings. It does not invent or promote unverified atlas animations.
 - Hidden-special VFX and particle colors are keyed to the six catalog fighter IDs, so each fighter has a distinct signature without requiring unverified art assets.
+- The combat engine now has per-fighter hidden-special frame windows, reach, damage and knockback. Blocking a hidden special reduces its damage; the CPU can use its own MAX attack sparingly.
 
 ## Combat feedback parity
 
