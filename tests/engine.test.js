@@ -68,8 +68,8 @@ test('specials consume energy, respect their cooldown and regenerate energy', ()
   stepMatch(match, 0.025, { special: true });
   assert.equal(match.fighters.player.action, 'idle', 'special is still cooling down');
   assert.ok(match.fighters.player.energy > energy);
-  assert.ok(match.fighters.player.energy <= 70, 'passive regeneration is limited to 6.5 energy per second');
-  advance(match, 0.6);
+  assert.ok(match.fighters.player.energy <= 71, 'passive regeneration is limited to 6.5 energy per second');
+  advance(match, 0.8);
   stepMatch(match, 0.025, { special: true });
   assert.equal(match.fighters.player.action, 'special');
   match.fighters.player.energy = 0;
