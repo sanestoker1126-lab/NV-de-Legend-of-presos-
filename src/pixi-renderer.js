@@ -56,15 +56,33 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     );
   };
 
-  async function preload(catalog) {
+  async function preload(catalog, initialStage = 'patio') {
+    // Load every fighter atlas needed for selection, but only the opening stage.
+    // Other stages are fetched on demand instead of blocking the first playable screen.
+    const stage = catalog.backgrounds.find(item => item.id === initialStage) || catalog.backgrounds[0];
     const paths = [...new Set([
       ...catalog.fighters.map(fighter => fighter.path),
-      ...catalog.backgrounds.map(stage => stage.path),
+      ...(stage ? [stage.path] : []),
     ])];
+    const loaded = new Map();
     await Promise.all(paths.map(async path => {
       const url = assetUrl(path);
-      if (!textureCache.has(url)) textureCache.set(url, await Assets.load(url));
+      let texture = textureCache.get(url);
+      if (!texture) {
+        texture = await Assets.load(url);
+        textureCache.set(url, texture);
+      }
+      loaded.set(path, texture);
     }));
+    return loaded;
+  }
+
+  async function loadStage(path) {
+    const url = assetUrl(path);
+    if (textureCache.has(url)) return textureCache.get(url);
+    const texture = await Assets.load(url);
+    textureCache.set(url, texture);
+    return texture;
   }
 
   function textureFor(path) {
@@ -196,7 +214,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
     for (const shadow of shadowCache.values()) shadow.visible = false;
     for (const feedback of feedbackCache.values()) feedback.visible = false;
     const stageInfo = catalog.backgrounds.find(item => item.id === stage);
-    if (stageInfo) setBackground(stageInfo.path);
+    if (stageInfo && textureCache.has(assetUrl(stageInfo.path))) setBackground(stageInfo.path);
     const left = catalog.fighters.find(f => f.id === (match?.fighters.player.id || selectedFighter)) || catalog.fighters[0];
     const rightId = match?.fighters.opponent.id || (catalog.fighters.find(f => f.id === 'mateo' && f.id !== left.id) || catalog.fighters.find(f => f.id !== left.id))?.id;
     const right = catalog.fighters.find(f => f.id === rightId) || catalog.fighters[1];
@@ -238,6 +256,7 @@ export async function createPixiRenderer(host, { assetUrl, reducedMotion = false
   return {
     canvas: app.canvas,
     preload,
+    loadStage,
     draw,
     destroy() {
       destroyed = true;
