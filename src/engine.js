@@ -11,18 +11,18 @@ export const ARENA = Object.freeze({ width: 960, height: 420, groundY: 350, minX
 export const ATTACKS = Object.freeze({
   punch: Object.freeze({ damage: 9, range: 108, startup: 0.07, active: 0.10, duration: 0.34, knockback: 22, energy: 0 }),
   kick: Object.freeze({ damage: 14, range: 146, startup: 0.13, active: 0.12, duration: 0.49, knockback: 38, energy: 0 }),
-  special: Object.freeze({ damage: 24, range: 272, startup: 0.19, active: 0.16, duration: 0.72, knockback: 64, energy: 35 }),
-  hidden: Object.freeze({ damage: 38, range: 320, startup: 0.24, active: 0.20, duration: 1.05, knockback: 78, energy: 80 }),
+  special: Object.freeze({ damage: 24, range: 272, startup: 0.12, active: 0.12, duration: 0.54, knockback: 64, energy: 35 }),
+  hidden: Object.freeze({ damage: 38, range: 320, startup: 0.14, active: 0.14, duration: 0.72, knockback: 78, energy: 80 }),
 });
 
 // Hidden specials have distinct frame windows, reach and impact for each playable fighter.
 export const HIDDEN_SPECIALS = Object.freeze({
-  tobi: Object.freeze({ damage: 34, range: 350, startup: 0.16, active: 0.16, duration: 0.90, knockback: 64, energy: 80 }),
-  mateo: Object.freeze({ damage: 42, range: 300, startup: 0.28, active: 0.24, duration: 1.10, knockback: 86, energy: 80 }),
-  nadia: Object.freeze({ damage: 32, range: 365, startup: 0.20, active: 0.25, duration: 0.95, knockback: 58, energy: 80 }),
-  semillas: Object.freeze({ damage: 36, range: 285, startup: 0.18, active: 0.22, duration: 0.95, knockback: 55, energy: 80 }),
-  oscuro: Object.freeze({ damage: 40, range: 315, startup: 0.30, active: 0.22, duration: 1.10, knockback: 82, energy: 80 }),
-  callejero: Object.freeze({ damage: 37, range: 325, startup: 0.22, active: 0.18, duration: 1.00, knockback: 74, energy: 80 }),
+  tobi: Object.freeze({ damage: 34, range: 350, startup: 0.10, active: 0.12, duration: 0.62, knockback: 64, energy: 80 }),
+  mateo: Object.freeze({ damage: 42, range: 300, startup: 0.16, active: 0.14, duration: 0.78, knockback: 86, energy: 80 }),
+  nadia: Object.freeze({ damage: 32, range: 365, startup: 0.12, active: 0.14, duration: 0.66, knockback: 58, energy: 80 }),
+  semillas: Object.freeze({ damage: 36, range: 285, startup: 0.11, active: 0.13, duration: 0.65, knockback: 55, energy: 80 }),
+  oscuro: Object.freeze({ damage: 40, range: 315, startup: 0.16, active: 0.14, duration: 0.78, knockback: 82, energy: 80 }),
+  callejero: Object.freeze({ damage: 37, range: 325, startup: 0.13, active: 0.12, duration: 0.70, knockback: 74, energy: 80 }),
 });
 
 function attackDefinition(fighter, attack) {
@@ -205,7 +205,7 @@ function applyHit(match, hit) {
     attacker.hits += 1;
     attacker.energy = Math.min(100, attacker.energy + 3);
     defender.action = 'hit';
-    defender.actionTime = attack.name === 'hidden' ? 0.42 : attack.name === 'special' ? 0.32 : 0.21;
+    defender.actionTime = attack.name === 'hidden' ? 0.30 : attack.name === 'special' ? 0.24 : 0.21;
     defender._attack = null;
   }
   match.events.push({ type: 'hit', side, target: otherSide(side), attack: attack.name, damage, blocked, x: defender.x, y: defender.y });
