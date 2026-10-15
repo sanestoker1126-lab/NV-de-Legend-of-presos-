@@ -34,6 +34,8 @@ class CombatDemoChecks(unittest.TestCase):
             "maxTicks=600",
             "p.pow=Math.max(0,p.pow-.35)",
             "if(!a||!a.hit)return false",
+            "pow:isTraining?3:0",
+            "if(k==='jump'){if(!e.repeat)action('jump')}",
         ]
         for snippet in required:
             with self.subTest(snippet=snippet):
