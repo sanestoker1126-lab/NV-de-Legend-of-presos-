@@ -216,7 +216,10 @@ func _layout_controls() -> void:
 		return
 	var narrow := get_viewport().get_visible_rect().size.x < 760.0
 	var button_size := 44.0 if narrow else 76.0
-	var gap := 8.0 if not narrow else 6.0
+	var gap := 6.0 if narrow else 8.0
+	left_group.add_theme_constant_override("separation", int(gap))
+	action_group.add_theme_constant_override("h_separation", int(gap))
+	action_group.add_theme_constant_override("v_separation", int(gap))
 	action_group.columns = 3 if narrow else 5
 	for group in [left_group, action_group]:
 		for child in group.get_children():
@@ -269,7 +272,7 @@ func _add_hold_button(parent: HBoxContainer, caption: String, action: String) ->
 	button.button_up.connect(func(): touch_input[action] = false)
 	parent.add_child(button)
 
-func _add_action_button(parent: HBoxContainer, caption: String, callback: Callable) -> void:
+func _add_action_button(parent: Container, caption: String, callback: Callable) -> void:
 	var button := Button.new()
 	button.text = caption
 	button.custom_minimum_size = Vector2(76, 56)
