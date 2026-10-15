@@ -327,6 +327,7 @@ func _attack(attacker: PGFighter, defender: PGFighter, kind: String) -> void:
 		var damage := 9.0 if kind == "PUNCH" else 14.0
 		var knockback := 2.0 if kind == "PUNCH" else 3.0
 		defender.receive_hit(damage * (1.35 if max_active and attacker == player else 1.0), knockback, attacker.global_position.x)
+		_spawn_hit_effect(defender, false)
 		attacker.power = minf(100.0, attacker.power + 6.0)
 		_set_status("%s CONECTA %s" % [attacker.fighter_name, kind])
 
@@ -340,9 +341,35 @@ func _special() -> void:
 	var in_front := signf(opponent.global_position.x - player.global_position.x) == player.facing
 	if distance <= 4.0 and in_front:
 		opponent.receive_hit(24.0 * (1.35 if max_active else 1.0), 5.0, player.global_position.x)
+		_spawn_hit_effect(opponent, true)
 		_set_status("ESPECIAL CONECTADO")
 	else:
 		_set_status("ESPECIAL · FUERA DE RANGO")
+
+func _spawn_hit_effect(target: PGFighter, is_special: bool) -> void:
+	# Procedural impact ring keeps the effect independent of unverified VFX atlas layouts.
+	var effect := MeshInstance3D.new()
+	var ring := TorusMesh.new()
+	ring.inner_radius = 0.28 if is_special else 0.20
+	ring.outer_radius = 0.46 if is_special else 0.34
+	ring.rings = 8
+	ring.ring_segments = 12
+	effect.mesh = ring
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.albedo_color = Color(1.0, 0.28, 0.12, 0.95) if is_special else Color(1.0, 0.78, 0.28, 0.9)
+	material.emission_enabled = true
+	material.emission = material.albedo_color
+	effect.material_override = material
+	effect.position = target.global_position + Vector3(0.0, 1.0, 0.0)
+	effect.scale = Vector3.ONE * (0.55 if is_special else 0.35)
+	add_child(effect)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(effect, "scale", Vector3.ONE * (1.65 if is_special else 1.1), 0.22)
+	tween.tween_property(material, "albedo_color:a", 0.0, 0.22)
+	tween.chain().tween_callback(effect.queue_free)
 
 func _activate_max() -> void:
 	if player.power < 80.0 or max_active:
