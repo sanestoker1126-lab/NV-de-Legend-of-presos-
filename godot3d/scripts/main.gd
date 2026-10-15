@@ -19,6 +19,15 @@ var ai_clock := 0.0
 var touch_input: Dictionary = {"left": false, "right": false, "guard": false}
 var left_group: HBoxContainer
 var action_group: GridContainer
+var fighter_index := 0
+const FIGHTER_ROSTER := [
+	{"id": "tobi", "name": "TOBI", "path": "res://assets/characters/tobi/atlas_00_override.webp", "frame": Vector2i(120, 120), "columns": 9, "color": Color(0.78, 0.10, 0.20), "animations": {"idle": {"row": 0, "start": 0, "frames": 9}, "walk": {"row": 1, "start": 0, "frames": 9}, "jump": {"row": 4, "start": 0, "frames": 9}, "punch": {"row": 5, "start": 0, "frames": 9}, "kick": {"row": 6, "start": 0, "frames": 9}, "hurt": {"row": 7, "start": 0, "frames": 9}}},
+	{"id": "mateo", "name": "MATEO", "path": "res://assets/characters/mateo/atlas_00.webp", "frame": Vector2i(160, 144), "columns": 9, "color": Color(0.12, 0.43, 0.64), "animations": {"idle": {"row": 0, "start": 0, "frames": 9}, "walk": {"row": 1, "start": 0, "frames": 9}, "punch": {"row": 4, "start": 0, "frames": 5}, "kick": {"row": 4, "start": 6, "frames": 3}}},
+	{"id": "nadia", "name": "NADIA", "path": "res://assets/characters/nadia/atlas_00.webp", "frame": Vector2i(160, 144), "columns": 9, "color": Color(0.75, 0.35, 0.82), "animations": {"idle": {"row": 0, "start": 0, "frames": 9}, "walk": {"row": 1, "start": 0, "frames": 9}, "punch": {"row": 6, "start": 0, "frames": 4}, "kick": {"row": 6, "start": 6, "frames": 3}}},
+	{"id": "semillas", "name": "SEMILLAS", "path": "res://assets/characters/semillas/atlas_00.webp", "frame": Vector2i(120, 120), "columns": 9, "color": Color(0.52, 0.66, 0.25), "animations": {"idle": {"row": 0, "start": 0, "frames": 4}, "walk": {"row": 0, "start": 4, "frames": 5}, "punch": {"row": 3, "start": 0, "frames": 9}, "kick": {"row": 4, "start": 0, "frames": 5}}},
+	{"id": "oscuro", "name": "OSCURO", "path": "res://assets/characters/oscuro/atlas_00.webp", "frame": Vector2i(160, 144), "columns": 9, "color": Color(0.36, 0.38, 0.72), "animations": {"idle": {"row": 0, "start": 0, "frames": 3}, "walk": {"row": 1, "start": 0, "frames": 8}, "punch": {"row": 2, "start": 7, "frames": 2}, "kick": {"row": 4, "start": 0, "frames": 5}}},
+	{"id": "callejero", "name": "CALLEJERO", "path": "res://assets/characters/callejero/atlas_00.webp", "frame": Vector2i(160, 144), "columns": 9, "color": Color(0.75, 0.54, 0.27), "animations": {"idle": {"row": 0, "start": 0, "frames": 4}, "walk": {"row": 1, "start": 0, "frames": 9}, "punch": {"row": 3, "start": 0, "frames": 2}, "kick": {"row": 4, "start": 0, "frames": 6}}}
+]
 
 func _ready() -> void:
 	_build_arena()
@@ -119,43 +128,35 @@ func _build_arena() -> void:
 
 func _build_fighters() -> void:
 	player = FighterScript.new()
-	player.fighter_name = "TOBI"
-	player.body_color = Color(0.78, 0.10, 0.20)
 	player.position = Vector3(-3.0, 0.0, 0.0)
-	player.configure_atlas(
-		load("res://assets/characters/tobi/atlas_00_override.webp"),
-		Vector2i(120, 120),
-		9,
-		{
-			"idle": {"row": 0, "start": 0, "frames": 9},
-			"walk": {"row": 1, "start": 0, "frames": 9},
-			"jump": {"row": 4, "start": 0, "frames": 9},
-			"punch": {"row": 5, "start": 0, "frames": 9},
-			"kick": {"row": 6, "start": 0, "frames": 9},
-			"hurt": {"row": 7, "start": 0, "frames": 9}
-		}
-	)
+	_configure_roster_fighter(player, 0)
 	add_child(player)
 
 	opponent = FighterScript.new()
-	opponent.fighter_name = "MATEO"
-	opponent.body_color = Color(0.12, 0.43, 0.64)
 	opponent.position = Vector3(3.0, 0.0, 0.0)
-	opponent.configure_atlas(
-		load("res://assets/characters/mateo/atlas_00.webp"),
-		Vector2i(160, 144),
-		9,
-		{
-			"idle": {"row": 0, "start": 0, "frames": 9},
-			"walk": {"row": 1, "start": 0, "frames": 9},
-			"punch": {"row": 4, "start": 0, "frames": 5},
-			"kick": {"row": 4, "start": 6, "frames": 3}
-		}
-	)
+	_configure_roster_fighter(opponent, 1)
 	add_child(opponent)
 
 	player.fighter_defeated.connect(_on_fighter_defeated)
 	opponent.fighter_defeated.connect(_on_fighter_defeated)
+
+func _configure_roster_fighter(fighter: PGFighter, index: int) -> void:
+	var definition: Dictionary = FIGHTER_ROSTER[index % FIGHTER_ROSTER.size()]
+	fighter.fighter_name = str(definition["name"])
+	fighter.body_color = definition["color"]
+	fighter.configure_atlas(
+		load(str(definition["path"])) as Texture2D,
+		definition["frame"],
+		int(definition["columns"]),
+		definition["animations"]
+	)
+
+func _cycle_player_fighter() -> void:
+	fighter_index = (fighter_index + 1) % FIGHTER_ROSTER.size()
+	_configure_roster_fighter(player, fighter_index)
+	if FIGHTER_ROSTER[fighter_index]["id"] == FIGHTER_ROSTER[1]["id"]:
+		_configure_roster_fighter(opponent, 0)
+	_set_status("LUCHADOR: %s" % player.fighter_name)
 
 func _build_camera_and_lights() -> void:
 	var camera := Camera3D.new()
@@ -216,6 +217,13 @@ func _build_hud() -> void:
 	status_label.size = Vector2(500, 36)
 	status_label.add_theme_font_size_override("font_size", 18)
 	root.add_child(status_label)
+
+	var roster_button := Button.new()
+	roster_button.text = "CAMBIAR LUCHADOR"
+	roster_button.position = Vector2(24, 116)
+	roster_button.custom_minimum_size = Vector2(190, 34)
+	roster_button.pressed.connect(_cycle_player_fighter)
+	root.add_child(roster_button)
 
 	left_group = HBoxContainer.new()
 	left_group.add_theme_constant_override("separation", 8)
