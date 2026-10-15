@@ -17,14 +17,31 @@ var attack_cooldown: float = 0.0
 var hit_stun: float = 0.0
 var is_guarding: bool = false
 var is_defeated: bool = false
-var _visual: MeshInstance3D
+var _sprite: Sprite3D
 var _guard_visual: MeshInstance3D
+var _atlas: Texture2D
+var _frame_size := Vector2i(120, 120)
+var _atlas_columns := 9
+var _animations: Dictionary = {}
+var _animation_name := "idle"
+var _animation_clock := 0.0
+var _action_override := ""
+var _action_time := 0.0
 
 func _ready() -> void:
 	health = max_health
 	power = 0.0
 	_build_visuals()
 	add_to_group("fighters")
+
+func configure_atlas(texture: Texture2D, frame_size: Vector2i, columns: int, animations: Dictionary) -> void:
+	_atlas = texture
+	_frame_size = frame_size
+	_atlas_columns = maxi(1, columns)
+	_animations = animations.duplicate(true)
+	if is_inside_tree():
+		_apply_atlas()
+	_update_sprite_animation(0.0)
 
 func _build_visuals() -> void:
 	var collision := CollisionShape3D.new()
@@ -35,18 +52,15 @@ func _build_visuals() -> void:
 	collision.position.y = 0.95
 	add_child(collision)
 
-	var capsule := CapsuleMesh.new()
-	capsule.radius = 0.42
-	capsule.height = 1.9
-	_visual = MeshInstance3D.new()
-	_visual.name = "PlaceholderBody"
-	_visual.mesh = capsule
-	var material := StandardMaterial3D.new()
-	material.albedo_color = body_color
-	material.roughness = 0.72
-	_visual.material_override = material
-	_visual.position.y = 0.95
-	add_child(_visual)
+	_sprite = Sprite3D.new()
+	_sprite.name = "CharacterAtlasSprite"
+	_sprite.centered = false
+	_sprite.position.y = 0.02
+	_sprite.pixel_size = 1.65 / float(maxi(1, _frame_size.y))
+	_sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	_sprite.texture = _atlas
+	_apply_atlas()
+	add_child(_sprite)
 
 	var guard_mesh := SphereMesh.new()
 	guard_mesh.radius = 0.75
@@ -63,21 +77,35 @@ func _build_visuals() -> void:
 	_guard_visual.visible = false
 	add_child(_guard_visual)
 
+func _apply_atlas() -> void:
+	if not is_instance_valid(_sprite):
+		return
+	_sprite.texture = _atlas
+	_sprite.region_enabled = _atlas != null
+	_sprite.region_rect = Rect2(Vector2.ZERO, Vector2(_frame_size))
+	_sprite.offset = Vector2(-float(_frame_size.x) * 0.5, -float(_frame_size.y))
+	_sprite.pixel_size = 1.65 / float(maxi(1, _frame_size.y))
+
 func tick_timers(delta: float) -> void:
 	attack_cooldown = maxf(0.0, attack_cooldown - delta)
 	hit_stun = maxf(0.0, hit_stun - delta)
+	_action_time = maxf(0.0, _action_time - delta)
+	_animation_clock += delta
 	if not is_on_floor():
 		velocity.y -= 22.0 * delta
 	else:
 		velocity.y = minf(velocity.y, 0.0)
 	is_guarding = false
 	_guard_visual.visible = false
+	_update_sprite_animation(delta)
 
 func face_target(target: Vector3) -> void:
 	var direction := target.x - global_position.x
 	if absf(direction) > 0.03:
 		facing = signf(direction)
 		rotation.y = 0.0 if facing > 0.0 else PI
+		if is_instance_valid(_sprite):
+			_sprite.flip_h = facing < 0.0
 
 func move_horizontal(axis: float, delta: float) -> void:
 	if is_defeated:
@@ -94,12 +122,18 @@ func move_horizontal(axis: float, delta: float) -> void:
 func jump() -> void:
 	if is_on_floor() and not is_defeated and hit_stun <= 0.0:
 		velocity.y = 8.0
+		play_action("jump", 0.28)
 
 func begin_attack(cooldown: float) -> bool:
 	if is_defeated or hit_stun > 0.0 or attack_cooldown > 0.0:
 		return false
 	attack_cooldown = cooldown
 	return true
+
+func play_action(action: String, duration: float = 0.22) -> void:
+	_action_override = action
+	_action_time = duration
+	_update_sprite_animation(0.0)
 
 func set_guarding(active: bool) -> void:
 	is_guarding = active and not is_defeated and hit_stun <= 0.0
@@ -111,10 +145,39 @@ func receive_hit(damage: float, knockback: float, attacker_x: float) -> void:
 	var applied_damage := damage * (0.2 if is_guarding and signf(attacker_x - global_position.x) == facing else 1.0)
 	health = maxf(0.0, health - applied_damage)
 	hit_stun = 0.24
+	_action_override = "hurt"
+	_action_time = hit_stun
 	velocity.x = signf(global_position.x - attacker_x) * knockback
 	power = minf(max_power, power + 8.0)
 	health_changed.emit(self)
+	_update_sprite_animation(0.0)
 	if health <= 0.0:
 		is_defeated = true
 		velocity = Vector3.ZERO
 		fighter_defeated.emit(self)
+
+func _update_sprite_animation(_delta: float) -> void:
+	if not is_instance_valid(_sprite) or _atlas == null or _animations.is_empty():
+		return
+	var desired := "idle"
+	if hit_stun > 0.0 and _animations.has("hurt"):
+		desired = "hurt"
+	elif _action_time > 0.0 and not _action_override.is_empty():
+		desired = _action_override
+	elif absf(velocity.x) > 0.25 and _animations.has("walk"):
+		desired = "walk"
+	if not _animations.has(desired):
+		desired = "punch" if desired == "special" and _animations.has("punch") else "idle"
+	if not _animations.has(desired):
+		return
+	var animation: Dictionary = _animations[desired]
+	var frames := maxi(1, int(animation.get("frames", 1)))
+	var start_column := int(animation.get("start", 0))
+	var row := int(animation.get("row", 0))
+	var frame_duration := 0.11 if desired == "idle" else 0.075
+	var frame := int(floor(_animation_clock / frame_duration)) % frames
+	var column := start_column + frame
+	var rect := Rect2(Vector2(column * _frame_size.x, row * _frame_size.y), Vector2(_frame_size))
+	if _sprite.region_rect != rect or _animation_name != desired:
+		_sprite.region_rect = rect
+		_animation_name = desired
