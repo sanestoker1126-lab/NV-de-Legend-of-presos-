@@ -80,9 +80,13 @@ func face_target(target: Vector3) -> void:
 		rotation.y = 0.0 if facing > 0.0 else PI
 
 func move_horizontal(axis: float, delta: float) -> void:
-	if is_defeated or hit_stun > 0.0:
-		axis = 0.0
-	velocity.x = axis * move_speed
+	if is_defeated:
+		velocity = Vector3.ZERO
+		return
+	if hit_stun > 0.0:
+		velocity.x = move_toward(velocity.x, 0.0, 14.0 * delta)
+	else:
+		velocity.x = axis * move_speed
 	velocity.z = 0.0
 	move_and_slide()
 	global_position.x = clampf(global_position.x, -8.0, 8.0)
