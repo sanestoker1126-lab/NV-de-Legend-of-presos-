@@ -20,6 +20,7 @@ var touch_input: Dictionary = {"left": false, "right": false, "guard": false}
 var left_group: HBoxContainer
 var action_group: GridContainer
 var fighter_index := 0
+var cpu_attack_count := 0
 const FIGHTER_ROSTER := [
 	{"id": "tobi", "name": "TOBI", "path": "res://assets/characters/tobi/atlas_00_override.webp", "frame": Vector2i(120, 120), "columns": 9, "color": Color(0.78, 0.10, 0.20), "animations": {"idle": {"row": 0, "start": 0, "frames": 9}, "walk": {"row": 1, "start": 0, "frames": 9}, "jump": {"row": 4, "start": 0, "frames": 9}, "punch": {"row": 5, "start": 0, "frames": 9}, "kick": {"row": 6, "start": 0, "frames": 9}, "hurt": {"row": 7, "start": 0, "frames": 9}}},
 	{"id": "mateo", "name": "MATEO", "path": "res://assets/characters/mateo/atlas_00.webp", "frame": Vector2i(160, 144), "columns": 9, "color": Color(0.12, 0.43, 0.64), "animations": {"idle": {"row": 0, "start": 0, "frames": 9}, "walk": {"row": 1, "start": 0, "frames": 9}, "punch": {"row": 4, "start": 0, "frames": 5}, "kick": {"row": 4, "start": 6, "frames": 3}}},
@@ -154,9 +155,12 @@ func _configure_roster_fighter(fighter: PGFighter, index: int) -> void:
 func _cycle_player_fighter() -> void:
 	fighter_index = (fighter_index + 1) % FIGHTER_ROSTER.size()
 	_configure_roster_fighter(player, fighter_index)
-	if FIGHTER_ROSTER[fighter_index]["id"] == FIGHTER_ROSTER[1]["id"]:
-		_configure_roster_fighter(opponent, 0)
-	_set_status("LUCHADOR: %s" % player.fighter_name)
+	# Never leave both sides using the same roster entry, including when cycling wraps to Tobi.
+	var opponent_index := 1
+	if str(FIGHTER_ROSTER[opponent_index]["id"]) == str(FIGHTER_ROSTER[fighter_index]["id"]):
+		opponent_index = (fighter_index + 1) % FIGHTER_ROSTER.size()
+	_configure_roster_fighter(opponent, opponent_index)
+	_set_status("JUGADOR: %s  ·  CPU: %s" % [player.fighter_name, opponent.fighter_name])
 
 func _build_camera_and_lights() -> void:
 	var camera := Camera3D.new()
@@ -360,7 +364,9 @@ func _update_cpu(delta: float) -> void:
 		opponent.move_horizontal(0.0, delta)
 	if ai_clock <= 0.0 and distance < 2.3:
 		ai_clock = 0.95
-		_attack(opponent, player, "KICK" if randf() < 0.45 else "PUNCH")
+		# Reproducible CPU behavior: alternate attacks instead of introducing random combat outcomes.
+		cpu_attack_count += 1
+		_attack(opponent, player, "KICK" if cpu_attack_count % 3 == 0 else "PUNCH")
 
 func _update_hud() -> void:
 	player_hp.value = player.health
