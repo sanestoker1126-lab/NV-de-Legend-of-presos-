@@ -17,6 +17,8 @@ var max_active := false
 var match_running := true
 var ai_clock := 0.0
 var touch_input: Dictionary = {"left": false, "right": false, "guard": false}
+var left_group: HBoxContainer
+var action_group: GridContainer
 
 func _ready() -> void:
 	_build_arena()
@@ -167,6 +169,7 @@ func _build_hud() -> void:
 	var root := Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(root)
+	get_viewport().size_changed.connect(_layout_controls)
 
 	var title := Label.new()
 	title.text = "PUENTE GRANDE  /  LEGEND OF PRESOS"
@@ -190,23 +193,56 @@ func _build_hud() -> void:
 	status_label.add_theme_font_size_override("font_size", 18)
 	root.add_child(status_label)
 
-	var left_group := HBoxContainer.new()
-	left_group.position = Vector2(20, 600)
+	left_group = HBoxContainer.new()
 	left_group.add_theme_constant_override("separation", 8)
 	root.add_child(left_group)
 	_add_hold_button(left_group, "◀", "left")
 	_add_hold_button(left_group, "▶", "right")
 	_add_hold_button(left_group, "GUARD", "guard")
 
-	var action_group := HBoxContainer.new()
-	action_group.position = Vector2(770, 600)
-	action_group.add_theme_constant_override("separation", 8)
+	action_group = GridContainer.new()
+	action_group.add_theme_constant_override("h_separation", 6)
+	action_group.add_theme_constant_override("v_separation", 6)
 	root.add_child(action_group)
 	_add_action_button(action_group, "JUMP", Callable(self, "_jump_player"))
 	_add_action_button(action_group, "PUNCH", Callable(self, "_punch_player"))
 	_add_action_button(action_group, "KICK", Callable(self, "_kick_player"))
 	_add_action_button(action_group, "SP", Callable(self, "_special"))
 	_add_action_button(action_group, "MAX", Callable(self, "_activate_max"))
+	_layout_controls()
+
+func _layout_controls() -> void:
+	if not is_instance_valid(left_group) or not is_instance_valid(action_group):
+		return
+	var narrow := get_viewport().get_visible_rect().size.x < 760.0
+	var button_size := 44.0 if narrow else 76.0
+	var gap := 8.0 if not narrow else 6.0
+	action_group.columns = 3 if narrow else 5
+	for group in [left_group, action_group]:
+		for child in group.get_children():
+			if child is Button:
+				child.custom_minimum_size = Vector2(button_size, button_size if narrow else 56.0)
+	left_group.anchor_left = 0.0
+	left_group.anchor_top = 1.0
+	left_group.anchor_right = 0.0
+	left_group.anchor_bottom = 1.0
+	var left_width := button_size * 3.0 + gap * 2.0
+	left_group.offset_left = 16.0
+	left_group.offset_top = -(button_size + 16.0)
+	left_group.offset_right = 16.0 + left_width
+	left_group.offset_bottom = -16.0
+	action_group.anchor_left = 1.0
+	action_group.anchor_top = 1.0
+	action_group.anchor_right = 1.0
+	action_group.anchor_bottom = 1.0
+	var columns := 3.0 if narrow else 5.0
+	var rows := 2.0 if narrow else 1.0
+	var action_width := columns * button_size + (columns - 1.0) * gap
+	var action_height := rows * (button_size if narrow else 56.0) + (rows - 1.0) * gap
+	action_group.offset_left = -16.0 - action_width
+	action_group.offset_top = -16.0 - action_height
+	action_group.offset_right = -16.0
+	action_group.offset_bottom = -16.0
 
 func _make_bar(parent: Control, at: Vector2, dimensions: Vector2, fill_color: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
