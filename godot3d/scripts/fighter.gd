@@ -27,6 +27,14 @@ func _ready() -> void:
 	add_to_group("fighters")
 
 func _build_visuals() -> void:
+	var collision := CollisionShape3D.new()
+	var collision_shape := CapsuleShape3D.new()
+	collision_shape.radius = 0.42
+	collision_shape.height = 1.9
+	collision.shape = collision_shape
+	collision.position.y = 0.95
+	add_child(collision)
+
 	var capsule := CapsuleMesh.new()
 	capsule.radius = 0.42
 	capsule.height = 1.9
