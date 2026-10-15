@@ -55,9 +55,10 @@ func _build_visuals() -> void:
 	_sprite = Sprite3D.new()
 	_sprite.name = "CharacterAtlasSprite"
 	_sprite.centered = false
+	_sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	_sprite.position.y = 0.02
 	_sprite.pixel_size = 1.65 / float(maxi(1, _frame_size.y))
-	_sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_sprite.texture = _atlas
 	_apply_atlas()
 	add_child(_sprite)
@@ -103,7 +104,6 @@ func face_target(target: Vector3) -> void:
 	var direction := target.x - global_position.x
 	if absf(direction) > 0.03:
 		facing = signf(direction)
-		rotation.y = 0.0 if facing > 0.0 else PI
 		if is_instance_valid(_sprite):
 			_sprite.flip_h = facing < 0.0
 
