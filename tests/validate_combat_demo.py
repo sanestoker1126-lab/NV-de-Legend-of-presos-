@@ -12,7 +12,7 @@ class CombatDemoChecks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.html = HTML.read_text(encoding="utf-8")
-        match = re.search(r"<script>([\\s\\S]*?)</script>", cls.html)
+        match = re.search(r"<script>([\s\S]*?)</script>", cls.html)
         if not match:
             raise AssertionError("No se encontró el script principal en el HTML")
         cls.script = match.group(1)
