@@ -6,7 +6,7 @@ This is an isolated Godot 4 project under `godot3d/`. It does not replace the ex
 
 - Native Godot 3D arena with floor collision, camera, and sprite-based fighters over physical collision bodies.
 - Integrated 41 character atlas files, 7 VFX atlas sheets, and the shared catalog metadata under `assets/`.
-- Tobi and Mateo currently use their atlas frames for idle, movement, attacks, jump/hurt where mapped; other imported atlases are staged for roster expansion and verified animation mapping.
+- Six roster entries are selectable in-game with **CAMBIAR LUCHADOR**: Tobi, Mateo, Nadia, Semillas, Oscuro, and Callejero. Each uses its own atlas and the animation rows mapped in the catalog; missing actions fall back to idle/punch until their frames are verified.
 - Player movement, jump, punch, kick, guard, special attack, MAX state, health bars, power meter, and round timer.
 - Simple CPU opponent and touch-screen buttons.
 - 60 Hz physics configuration and fighter collision bodies.
