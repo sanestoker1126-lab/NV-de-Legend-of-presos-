@@ -122,12 +122,36 @@ func _build_fighters() -> void:
 	player.fighter_name = "TOBI"
 	player.body_color = Color(0.78, 0.10, 0.20)
 	player.position = Vector3(-3.0, 0.0, 0.0)
+	player.configure_atlas(
+		load("res://assets/characters/tobi/atlas_00_override.webp"),
+		Vector2i(120, 120),
+		9,
+		{
+			"idle": {"row": 0, "start": 0, "frames": 9},
+			"walk": {"row": 1, "start": 0, "frames": 9},
+			"jump": {"row": 4, "start": 0, "frames": 9},
+			"punch": {"row": 5, "start": 0, "frames": 9},
+			"kick": {"row": 6, "start": 0, "frames": 9},
+			"hurt": {"row": 7, "start": 0, "frames": 9}
+		}
+	)
 	add_child(player)
 
 	opponent = FighterScript.new()
-	opponent.fighter_name = "DON GARRAVAS"
+	opponent.fighter_name = "MATEO"
 	opponent.body_color = Color(0.12, 0.43, 0.64)
 	opponent.position = Vector3(3.0, 0.0, 0.0)
+	opponent.configure_atlas(
+		load("res://assets/characters/mateo/atlas_00.webp"),
+		Vector2i(160, 144),
+		9,
+		{
+			"idle": {"row": 0, "start": 0, "frames": 9},
+			"walk": {"row": 1, "start": 0, "frames": 9},
+			"punch": {"row": 4, "start": 0, "frames": 5},
+			"kick": {"row": 4, "start": 6, "frames": 3}
+		}
+	)
 	add_child(opponent)
 
 	player.fighter_defeated.connect(_on_fighter_defeated)
@@ -283,6 +307,7 @@ func _attack(attacker: PGFighter, defender: PGFighter, kind: String) -> void:
 	var cooldown := 0.34 if kind == "PUNCH" else 0.49
 	if not attacker.begin_attack(cooldown):
 		return
+	attacker.play_action("punch" if kind == "PUNCH" else "kick", 0.22 if kind == "PUNCH" else 0.30)
 	var distance := absf(defender.global_position.x - attacker.global_position.x)
 	var in_front := signf(defender.global_position.x - attacker.global_position.x) == attacker.facing
 	var reach := 1.65 if kind == "PUNCH" else 2.15
@@ -298,6 +323,7 @@ func _special() -> void:
 		_set_status("ENERGÍA INSUFICIENTE · SP")
 		return
 	player.power -= 35.0
+	player.play_action("special", 0.34)
 	var distance := absf(opponent.global_position.x - player.global_position.x)
 	var in_front := signf(opponent.global_position.x - player.global_position.x) == player.facing
 	if distance <= 4.0 and in_front:
