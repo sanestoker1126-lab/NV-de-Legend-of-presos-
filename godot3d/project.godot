@@ -8,6 +8,10 @@ run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 config/description="Prototipo 3D nativo de combate para Puente Grande"
 
+[physics]
+3d/default_gravity=22.0
+common/physics_ticks_per_second=60
+
 [display]
 window/size/viewport_width=1280
 window/size/viewport_height=720
