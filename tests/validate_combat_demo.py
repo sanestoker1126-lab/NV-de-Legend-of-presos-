@@ -36,6 +36,11 @@ class CombatDemoChecks(unittest.TestCase):
             "if(!a||!a.hit)return false",
             "pow:isTraining?3:0",
             "if(k==='jump'){if(!e.repeat)action('jump')}",
+            "function clearInputs(){keys={};touch={};manualGuard=false;p.guard=false;o.guard=false}",
+            "addEventListener('blur',clearInputs)",
+            "if(document.hidden)clearInputs()",
+            "o.attack=null;o.y=0;o.vy=0",
+            "clearInputs();$('#menu').style.display='flex';running=false",
         ]
         for snippet in required:
             with self.subTest(snippet=snippet):
