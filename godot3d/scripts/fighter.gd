@@ -171,6 +171,10 @@ func _update_sprite_animation(_delta: float) -> void:
 	if not _animations.has(desired):
 		return
 	var animation: Dictionary = _animations[desired]
+	# Restart a newly selected action at frame zero instead of sampling the global animation clock.
+	if _animation_name != desired:
+		_animation_name = desired
+		_animation_clock = 0.0
 	var frames := maxi(1, int(animation.get("frames", 1)))
 	var start_column := int(animation.get("start", 0))
 	var row := int(animation.get("row", 0))
@@ -178,6 +182,5 @@ func _update_sprite_animation(_delta: float) -> void:
 	var frame := int(floor(_animation_clock / frame_duration)) % frames
 	var column := start_column + frame
 	var rect := Rect2(Vector2(column * _frame_size.x, row * _frame_size.y), Vector2(_frame_size))
-	if _sprite.region_rect != rect or _animation_name != desired:
+	if _sprite.region_rect != rect:
 		_sprite.region_rect = rect
-		_animation_name = desired
