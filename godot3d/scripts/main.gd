@@ -363,6 +363,7 @@ func _spawn_hit_effect(target: PGFighter, is_special: bool) -> void:
 	material.emission = material.albedo_color
 	effect.material_override = material
 	effect.position = target.global_position + Vector3(0.0, 1.0, 0.0)
+	effect.rotation_degrees.x = 90.0
 	effect.scale = Vector3.ONE * (0.55 if is_special else 0.35)
 	add_child(effect)
 	var tween := create_tween()
