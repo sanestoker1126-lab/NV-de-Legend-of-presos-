@@ -53,7 +53,35 @@ for (const item of [...catalog.fighters, ...catalog.backgrounds, ...catalog.audi
   if (!seen.has(item.path)) failures.push(`Recurso del catálogo no incluido en los manifiestos: ${item.path}`);
 }
 
+function webpDimensions(bytes) {
+  if (bytes.toString('ascii', 0, 4) !== 'RIFF' || bytes.toString('ascii', 8, 12) !== 'WEBP') return null;
+  const chunk = bytes.toString('ascii', 12, 16);
+  if (chunk === 'VP8X' && bytes.length >= 30) {
+    return { width: 1 + bytes.readUIntLE(24, 3), height: 1 + bytes.readUIntLE(27, 3) };
+  }
+  if (chunk === 'VP8L' && bytes.length >= 25 && bytes[20] === 0x2f) {
+    const bits = bytes.readUInt32LE(21);
+    return { width: 1 + (bits & 0x3fff), height: 1 + ((bits >>> 14) & 0x3fff) };
+  }
+  if (chunk === 'VP8 ' && bytes.length >= 30) {
+    return { width: bytes.readUInt16LE(26) & 0x3fff, height: bytes.readUInt16LE(28) & 0x3fff };
+  }
+  return null;
+}
+
 for (const fighter of catalog.fighters) {
+  try {
+    const bytes = await assetFile(fighter.path);
+    const dimensions = webpDimensions(bytes);
+    if (dimensions && (dimensions.width !== fighter.frameWidth * fighter.columns
+      || dimensions.height !== fighter.frameHeight * fighter.rows)) {
+      failures.push(`Dimensiones incompatibles para ${fighter.id}: atlas ${dimensions.width}×${dimensions.height}, cuadrícula esperada ${fighter.frameWidth * fighter.columns}×${fighter.frameHeight * fighter.rows}`);
+    } else if (!dimensions) {
+      failures.push(`No se pudieron leer las dimensiones WebP del atlas: ${fighter.id}`);
+    }
+  } catch (error) {
+    failures.push(error.message);
+  }
   for (const [action, mapping] of Object.entries(fighter.animations)) {
     if (![mapping.row, mapping.startColumn, mapping.frames].every(Number.isInteger)
       || mapping.row < 0 || mapping.row >= fighter.rows || mapping.startColumn < 0

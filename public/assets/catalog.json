@@ -1,7 +1,7 @@
 {
   "version": 1,
   "source": "Puente-Grande-CORE-040-PIXI.html",
-  "mappingNote": "La cuadrícula y los fotogramas poblados se verificaron en los atlas. Las acciones se infieren por inspección visual; no se incluyeron datos de animación del juego original.",
+  "mappingNote": "La cuadrícula y los fotogramas poblados se verificaron en los atlas. Las acciones se infieren por inspección visual; no se incluyeron datos de animación del juego original. Se añadieron Garravas y Regente usando hojas 9 columnas × 7/8 filas; las filas de acción son inferidas y requieren revisión visual antes de producción.",
   "counts": {
     "assets": 71,
     "manifests": 3,
@@ -12,7 +12,14 @@
       "audio": 17,
       "backgrounds": 5
     },
-    "playableFighters": 6
+    "playableFighters": 8,
+    "atlasRosterExpansion": {
+      "added": [
+        "garravas",
+        "regente"
+      ],
+      "mapping": "inferred row layout; verify frame semantics against original sheets before final production"
+    }
   },
   "fighters": [
     {
@@ -311,6 +318,140 @@
           "row": 4,
           "startColumn": 0,
           "frames": 6,
+          "inferred": true
+        }
+      }
+    },
+    {
+      "id": "garravas",
+      "name": "Don Garravas",
+      "path": "assets/characters/garravas/atlas_00.webp",
+      "frameWidth": 160,
+      "frameHeight": 144,
+      "columns": 9,
+      "rows": 7,
+      "idleFrames": 9,
+      "portrait": {
+        "row": 0,
+        "column": 0,
+        "alphaBounds": {
+          "x": 0,
+          "y": 0,
+          "width": 160,
+          "height": 144
+        }
+      },
+      "animations": {
+        "idle": {
+          "row": 0,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "walk": {
+          "row": 1,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "run": {
+          "row": 2,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "punch": {
+          "row": 3,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "kick": {
+          "row": 4,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "hurt": {
+          "row": 5,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "special": {
+          "row": 6,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        }
+      }
+    },
+    {
+      "id": "regente",
+      "name": "El Regente",
+      "path": "assets/characters/regente/atlas_00.webp",
+      "frameWidth": 160,
+      "frameHeight": 144,
+      "columns": 9,
+      "rows": 8,
+      "idleFrames": 9,
+      "portrait": {
+        "row": 0,
+        "column": 0,
+        "alphaBounds": {
+          "x": 0,
+          "y": 0,
+          "width": 160,
+          "height": 144
+        }
+      },
+      "animations": {
+        "idle": {
+          "row": 0,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "walk": {
+          "row": 1,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "run": {
+          "row": 2,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "punch": {
+          "row": 3,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "kick": {
+          "row": 4,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "hurt": {
+          "row": 5,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "block": {
+          "row": 6,
+          "startColumn": 0,
+          "frames": 9,
+          "inferred": true
+        },
+        "special": {
+          "row": 7,
+          "startColumn": 0,
+          "frames": 9,
           "inferred": true
         }
       }

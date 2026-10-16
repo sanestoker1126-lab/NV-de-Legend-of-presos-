@@ -1,7 +1,7 @@
 import { Application, Assets, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import { ARENA } from './engine.js';
 
-const hiddenPalette = { tobi: 0xff7847, mateo: 0xb9dfe6, nadia: 0xf3a8ff, semillas: 0xd8e77a, oscuro: 0x9a9fff, callejero: 0xffd483 };
+const hiddenPalette = { tobi: 0xff7847, mateo: 0xb9dfe6, nadia: 0xf3a8ff, semillas: 0xd8e77a, oscuro: 0x9a9fff, callejero: 0xffd483, garravas: 0xd94b54, regente: 0xe7b84b };
 
 /**
  * Renderer adapter for the existing combat engine. Combat simulation stays in
