@@ -21,6 +21,8 @@ var left_group: HBoxContainer
 var action_group: GridContainer
 var fighter_index := 0
 var cpu_attack_count := 0
+var combo_hits := 0
+var combo_clock := 0.0
 const FIGHTER_ROSTER := [
 	{"id": "tobi", "name": "TOBI", "path": "res://assets/characters/tobi/atlas_00_override.webp", "frame": Vector2i(120, 120), "columns": 9, "color": Color(0.78, 0.10, 0.20), "animations": {"idle": {"row": 0, "start": 0, "frames": 9}, "walk": {"row": 1, "start": 0, "frames": 9}, "jump": {"row": 4, "start": 0, "frames": 9}, "punch": {"row": 5, "start": 0, "frames": 9}, "kick": {"row": 6, "start": 0, "frames": 9}, "hurt": {"row": 7, "start": 0, "frames": 9}}},
 	{"id": "mateo", "name": "MATEO", "path": "res://assets/characters/mateo/atlas_00.webp", "frame": Vector2i(160, 144), "columns": 9, "color": Color(0.12, 0.43, 0.64), "animations": {"idle": {"row": 0, "start": 0, "frames": 9}, "walk": {"row": 1, "start": 0, "frames": 9}, "punch": {"row": 4, "start": 0, "frames": 5}, "kick": {"row": 4, "start": 6, "frames": 3}}},
@@ -42,6 +44,9 @@ func _physics_process(delta: float) -> void:
 	if not match_running:
 		return
 	round_time = maxf(0.0, round_time - delta)
+	combo_clock = maxf(0.0, combo_clock - delta)
+	if combo_clock <= 0.0:
+		combo_hits = 0
 	if round_time <= 0.0:
 		match_running = false
 		_set_status("TIEMPO TERMINADO")
@@ -330,10 +335,13 @@ func _attack(attacker: PGFighter, defender: PGFighter, kind: String) -> void:
 	if can_connect:
 		var damage := 9.0 if kind == "PUNCH" else 14.0
 		var knockback := 2.0 if kind == "PUNCH" else 3.0
-		defender.receive_hit(damage * (1.35 if max_active and attacker == player else 1.0), knockback, attacker.global_position.x)
+		defender.receive_hit(damage * (1.35 if max_active and attacker == player else 1.0), knockback, attacker.global_position.x, "punch" if kind == "PUNCH" else "kick")
+		if attacker == player:
+			combo_hits += 1
+			combo_clock = 1.15
 		_spawn_hit_effect(defender, false)
 		attacker.power = minf(100.0, attacker.power + 6.0)
-		_set_status("%s CONECTA %s" % [attacker.fighter_name, kind])
+		_set_status("%s CONECTA %s%s" % [attacker.fighter_name, kind, (" · COMBO %d" % combo_hits) if attacker == player and combo_hits > 1 else ""])
 
 func _special() -> void:
 	if player.power < 35.0 or not player.begin_attack(0.8):
@@ -345,7 +353,9 @@ func _special() -> void:
 	var in_front := signf(opponent.global_position.x - player.global_position.x) == player.facing
 	var depth_gap := absf(opponent.global_position.z - player.global_position.z)
 	if distance <= 4.25 and in_front and depth_gap <= 1.0:
-		opponent.receive_hit(24.0 * (1.35 if max_active else 1.0), 5.0, player.global_position.x)
+		opponent.receive_hit(24.0 * (1.35 if max_active else 1.0), 3.2, player.global_position.x, "special")
+		combo_hits += 1
+		combo_clock = 1.35
 		_spawn_hit_effect(opponent, true)
 		_set_status("ESPECIAL CONECTADO")
 	else:
