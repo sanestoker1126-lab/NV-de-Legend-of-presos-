@@ -322,8 +322,12 @@ func _attack(attacker: PGFighter, defender: PGFighter, kind: String) -> void:
 	attacker.play_action("punch" if kind == "PUNCH" else "kick", 0.22 if kind == "PUNCH" else 0.30)
 	var distance := absf(defender.global_position.x - attacker.global_position.x)
 	var in_front := signf(defender.global_position.x - attacker.global_position.x) == attacker.facing
-	var reach := 1.65 if kind == "PUNCH" else 2.15
-	if distance <= reach and in_front and absf(defender.global_position.y - attacker.global_position.y) < 1.1:
+	var depth_gap := absf(defender.global_position.z - attacker.global_position.z)
+	var vertical_gap := absf(defender.global_position.y - attacker.global_position.y)
+	# Generous, stable combat volumes: sprite poses do not exactly match capsule edges.
+	var reach := 2.05 if kind == "PUNCH" else 2.55
+	var can_connect := distance <= reach and in_front and depth_gap <= 0.9 and vertical_gap <= 1.35
+	if can_connect:
 		var damage := 9.0 if kind == "PUNCH" else 14.0
 		var knockback := 2.0 if kind == "PUNCH" else 3.0
 		defender.receive_hit(damage * (1.35 if max_active and attacker == player else 1.0), knockback, attacker.global_position.x)
@@ -339,7 +343,8 @@ func _special() -> void:
 	player.play_action("special", 0.34)
 	var distance := absf(opponent.global_position.x - player.global_position.x)
 	var in_front := signf(opponent.global_position.x - player.global_position.x) == player.facing
-	if distance <= 4.0 and in_front:
+	var depth_gap := absf(opponent.global_position.z - player.global_position.z)
+	if distance <= 4.25 and in_front and depth_gap <= 1.0:
 		opponent.receive_hit(24.0 * (1.35 if max_active else 1.0), 5.0, player.global_position.x)
 		_spawn_hit_effect(opponent, true)
 		_set_status("ESPECIAL CONECTADO")
