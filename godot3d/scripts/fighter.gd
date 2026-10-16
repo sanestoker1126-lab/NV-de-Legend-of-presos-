@@ -121,7 +121,7 @@ func move_horizontal(axis: float, delta: float) -> void:
 
 func jump() -> void:
 	if is_on_floor() and not is_defeated and hit_stun <= 0.0:
-		velocity.y = 8.0
+		velocity.y = 5.6
 		play_action("jump", 0.28)
 
 func begin_attack(cooldown: float) -> bool:
@@ -178,9 +178,15 @@ func _update_sprite_animation(_delta: float) -> void:
 	var frames := maxi(1, int(animation.get("frames", 1)))
 	var start_column := int(animation.get("start", 0))
 	var row := int(animation.get("row", 0))
-	var frame_duration := 0.11 if desired == "idle" else 0.075
+	var frame_duration := 0.14 if desired == "idle" else (0.095 if desired == "walk" else 0.085)
 	var frame := int(floor(_animation_clock / frame_duration)) % frames
-	var column := start_column + frame
-	var rect := Rect2(Vector2(column * _frame_size.x, row * _frame_size.y), Vector2(_frame_size))
+	var texture_columns := maxi(1, int(floor(float(_atlas.get_width()) / float(_frame_size.x))))
+	var texture_rows := maxi(1, int(floor(float(_atlas.get_height()) / float(_frame_size.y))))
+	var safe_row := clampi(row, 0, texture_rows - 1)
+	var safe_start := clampi(start_column, 0, texture_columns - 1)
+	var safe_frames := maxi(1, mini(frames, texture_columns - safe_start))
+	var safe_frame := mini(frame, safe_frames - 1)
+	var column := safe_start + safe_frame
+	var rect := Rect2(Vector2(column * _frame_size.x, safe_row * _frame_size.y), Vector2(_frame_size))
 	if _sprite.region_rect != rect:
 		_sprite.region_rect = rect
