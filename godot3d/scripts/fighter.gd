@@ -15,6 +15,7 @@ var power: float = 0.0
 var facing: float = 1.0
 var attack_cooldown: float = 0.0
 var hit_stun: float = 0.0
+var last_reaction: String = ""
 var is_guarding: bool = false
 var is_defeated: bool = false
 var _sprite: Sprite3D
@@ -139,16 +140,21 @@ func set_guarding(active: bool) -> void:
 	is_guarding = active and not is_defeated and hit_stun <= 0.0
 	_guard_visual.visible = is_guarding
 
-func receive_hit(damage: float, knockback: float, attacker_x: float) -> void:
+func receive_hit(damage: float, knockback: float, attacker_x: float, hit_kind: String = "punch") -> void:
 	if is_defeated:
 		return
-	var applied_damage := damage * (0.2 if is_guarding and signf(attacker_x - global_position.x) == facing else 1.0)
+	var blocked := is_guarding and signf(attacker_x - global_position.x) == facing
+	var applied_damage := damage * (0.18 if blocked else 1.0)
 	health = maxf(0.0, health - applied_damage)
-	hit_stun = 0.24
-	_action_override = "hurt"
+	hit_stun = 0.18 if blocked else (0.30 if hit_kind == "punch" else (0.38 if hit_kind == "kick" else 0.48))
+	last_reaction = "guard" if blocked else hit_kind
+	_action_override = "guard" if blocked and _animations.has("guard") else ("hurt" if _animations.has("hurt") else "idle")
 	_action_time = hit_stun
-	velocity.x = signf(global_position.x - attacker_x) * knockback
-	power = minf(max_power, power + 8.0)
+	var push_direction := signf(global_position.x - attacker_x)
+	velocity.x = push_direction * (knockback * (0.28 if blocked else 1.0))
+	if not blocked and hit_kind == "kick" and is_on_floor():
+		velocity.y = minf(velocity.y, 0.9)
+	power = minf(max_power, power + (4.0 if blocked else 8.0))
 	health_changed.emit(self)
 	_update_sprite_animation(0.0)
 	if health <= 0.0:
@@ -160,8 +166,11 @@ func _update_sprite_animation(_delta: float) -> void:
 	if not is_instance_valid(_sprite) or _atlas == null or _animations.is_empty():
 		return
 	var desired := "idle"
-	if hit_stun > 0.0 and _animations.has("hurt"):
-		desired = "hurt"
+	if hit_stun > 0.0:
+		if _animations.has(_action_override):
+			desired = _action_override
+		elif _animations.has("hurt"):
+			desired = "hurt"
 	elif _action_time > 0.0 and not _action_override.is_empty():
 		desired = _action_override
 	elif absf(velocity.x) > 0.25 and _animations.has("walk"):
