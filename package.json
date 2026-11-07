@@ -10,7 +10,7 @@
     "test": "node --test tests/engine.test.js",
     "test:e2e": "playwright test",
     "verify:assets": "node scripts/verify-assets.mjs",
-    "build:pages": "vite build --base=/The-King-the-presos-/"
+    "build:pages": "vite build --base=/NV-de-Legend-of-presos-/"
   },
   "engines": {
     "node": ">=22.12"

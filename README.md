@@ -6,9 +6,11 @@ Prototipo de juego de peleas para navegador, creado con los tres paquetes de rec
 
 Dirección del juego después de activar la publicación:
 
-**https://sanestoker1126-lab.github.io/The-King-the-presos-/**
+**https://sanestoker1126-lab.github.io/NV-de-Legend-of-presos-/**
 
-En el repositorio, abre **Settings → Pages → Build and deployment → Source** y selecciona **GitHub Actions**. Luego, en **Actions → Publicar Puente Grande → Run workflow**, ejecuta el flujo sobre `main`. El enlace queda disponible cuando termina la publicación. Los siguientes cambios en `main` se publican automáticamente.
+El flujo activa GitHub Pages automáticamente la primera vez que se ejecuta. En **Actions → Publicar Puente Grande → Run workflow**, ejecuta el flujo sobre `main`. El enlace queda disponible cuando termina la publicación. Los siguientes cambios en `main` se publican automáticamente.
+
+Si el flujo no puede activar Pages por permisos de la cuenta, actívalo manualmente en **Settings → Pages → Build and deployment → Source → GitHub Actions** y vuelve a ejecutar el flujo.
 
 El flujo verifica los 71 recursos, ejecuta las pruebas del motor y compila con la ruta del repositorio. No necesita secretos adicionales ni copiar manualmente archivos compilados al repositorio. Para generar esa misma versión localmente:
 
