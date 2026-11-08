@@ -1,0 +1,32 @@
+name: Godot 3D prototype checks
+
+on:
+  push:
+    branches:
+      - feat/godot-native-3d-prototype
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "godot3d/**"
+      - ".github/workflows/godot-prototype-checks.yml"
+
+jobs:
+  validate-godot-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Godot 4
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.4.1
+          use-dotnet: false
+          include-templates: false
+
+      - name: Import and parse project
+        run: godot --headless --editor --path godot3d --quit
+
+      - name: Smoke-test main scene
+        run: godot --headless --path godot3d --quit-after 5
