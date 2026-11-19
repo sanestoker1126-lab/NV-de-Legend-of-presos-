@@ -1,0 +1,27 @@
+name: Combat demo checks
+
+on:
+  push:
+    branches:
+      - main
+      - fix/combat-controls-v0.9
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate combat demo
+        run: python -m unittest discover -s tests -p "validate_*.py" -v
